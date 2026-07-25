@@ -29,7 +29,6 @@ TARGET_VENUES = [
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
 
-
 def get_page_text():
     last_error = None
 
@@ -44,7 +43,9 @@ def get_page_text():
             ),
             (
                 "Firefox",
-                lambda: playwright.firefox.launch(headless=True),
+                lambda: playwright.firefox.launch(
+                    headless=True,
+                ),
             ),
         ]
 
@@ -56,7 +57,10 @@ def get_page_text():
                 browser = launch_browser()
 
                 page = browser.new_page(
-                    viewport={"width": 1440, "height": 1600},
+                    viewport={
+                        "width": 1440,
+                        "height": 1600,
+                    },
                     user_agent=(
                         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                         "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -77,25 +81,122 @@ def get_page_text():
                             timeout=90000,
                         )
 
+                        # Allow the first batch of events to load.
                         page.wait_for_timeout(15000)
+
+                        view_more_clicks = 0
+                        max_view_more_clicks = 30
+
+                        while view_more_clicks < max_view_more_clicks:
+                            # Scroll down so lazy-loaded controls become visible.
+                            page.evaluate(
+                                "window.scrollTo(0, document.body.scrollHeight)"
+                            )
+                            page.wait_for_timeout(2000)
+
+                            # Try several ways of locating the button.
+                            view_more = page.get_by_text(
+                                re.compile(
+                                    r"VIEW\s+MORE\s+RESULTS",
+                                    re.IGNORECASE,
+                                ),
+                                exact=False,
+                            )
+
+                            if view_more.count() == 0:
+                                print(
+                                    "No View More Results button remains."
+                                )
+                                break
+
+                            button = view_more.last
+
+                            try:
+                                if not button.is_visible():
+                                    print(
+                                        "View More Results exists but "
+                                        "is no longer visible."
+                                    )
+                                    break
+
+                                previous_text_length = len(
+                                    page.locator("body").inner_text()
+                                )
+
+                                button.scroll_into_view_if_needed()
+                                page.wait_for_timeout(1000)
+
+                                button.click(
+                                    timeout=15000,
+                                    force=True,
+                                )
+
+                                view_more_clicks += 1
+
+                                print(
+                                    "Clicked View More Results "
+                                    f"{view_more_clicks} time(s)."
+                                )
+
+                                # Wait for additional listings to load.
+                                page.wait_for_timeout(5000)
+
+                                new_text_length = len(
+                                    page.locator("body").inner_text()
+                                )
+
+                                if new_text_length <= previous_text_length:
+                                    print(
+                                        "No additional page text appeared "
+                                        "after clicking."
+                                    )
+                                    break
+
+                            except Exception as click_error:
+                                print(
+                                    "Could not click View More Results: "
+                                    f"{click_error}"
+                                )
+                                break
+
+                        # Return to the top is not necessary, but helps ensure
+                        # the page has completed rendering.
+                        page.evaluate("window.scrollTo(0, 0)")
+                        page.wait_for_timeout(2000)
 
                         text = clean_text(
                             page.locator("body").inner_text()
                         )
 
-                        if len(text) >= 50:
-                            print(
-                                f"Schedule loaded successfully "
-                                f"with {browser_name}."
+                        if len(text) < 50:
+                            raise RuntimeError(
+                                "Page loaded but contained too little text."
                             )
-                            return text
 
-                        raise RuntimeError(
-                            "Page loaded but contained too little text."
+                        print(
+                            f"Schedule loaded successfully with "
+                            f"{browser_name}."
                         )
+                        print(
+                            f"Captured {len(text):,} characters of "
+                            "schedule text."
+                        )
+
+                        # Diagnostic checks.
+                        print(
+                            "August present in captured page:",
+                            "AUG " in text.upper(),
+                        )
+                        print(
+                            "Odyssey present in captured page:",
+                            "THE ODYSSEY" in text.upper(),
+                        )
+
+                        return text
 
                     except Exception as error:
                         last_error = error
+
                         print(
                             f"{browser_name} attempt {attempt} failed: "
                             f"{error}"
@@ -113,8 +214,8 @@ def get_page_text():
                     browser.close()
 
     raise RuntimeError(
-        "Could not load the Tickets.com schedule. "
-        f"Last error: {last_error}"
+        "Could not load the Tickets.com schedule after trying "
+        f"Chromium and Firefox. Last error: {last_error}"
     )
 
 def extract_target_showings(page_text):
