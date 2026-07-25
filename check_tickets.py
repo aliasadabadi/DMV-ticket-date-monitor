@@ -291,14 +291,24 @@ def save_state(showings):
     )
 
 def format_showing(showing):
-    venue = showing["venue"].title()
+    venue_names = {
+        "AIRBUS IMAX THEATER, CHANTILLY, VA":
+            "Airbus IMAX Theater, Chantilly, VA",
+
+        "LOCKHEED IMAX THEATER, WASHINGTON, DC":
+            "Lockheed IMAX Theater, Washington, DC",
+    }
+
+    venue = venue_names.get(
+        showing["venue"],
+        showing["venue"],
+    )
 
     return (
         f"{showing['weekday'].title()}, "
         f"{showing['date'].title()} at {showing['time']}\n"
         f"{venue}"
     )
-
 
 def send_notification(title, message):
     if not NTFY_TOPIC:
