@@ -1,4 +1,3 @@
-import hashlib
 import json
 import os
 import re
@@ -17,9 +16,13 @@ URL = (
 STATE_FILE = Path("ticket_state.json")
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 
+TARGET_MOVIE = "THE ODYSSEY"
+TARGET_VENUE = "AIRBUS IMAX THEATER, CHANTILLY, VA"
+
 
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
+
 
 def get_page_text():
     last_error = None
@@ -44,7 +47,6 @@ def get_page_text():
 
             try:
                 print(f"Trying {browser_name}...")
-
                 browser = launch_browser()
 
                 page = browser.new_page(
@@ -83,7 +85,7 @@ def get_page_text():
                             return text
 
                         raise RuntimeError(
-                            "The page loaded but contained too little text."
+                            "Page loaded but contained too little text."
                         )
 
                     except Exception as error:
@@ -105,13 +107,64 @@ def get_page_text():
                     browser.close()
 
     raise RuntimeError(
-        "Could not load the Tickets.com schedule after trying "
-        f"Chromium and Firefox. Last error: {last_error}"
+        "Could not load the Tickets.com schedule. "
+        f"Last error: {last_error}"
     )
 
 
-def fingerprint(text):
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+def extract_target_showings(page_text):
+    """
+    Extract only The Odyssey showings at Airbus IMAX.
+
+    Each showing is stored using date, time, and title as its unique key.
+    """
+
+    month_pattern = (
+        r"JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC"
+    )
+
+    pattern = re.compile(
+        rf"(?P<date>(?:{month_pattern}) \d{{1,2}}) "
+        rf"(?P<title>THE ODYSSEY"
+        rf"(?: - OPEN CAPTION \(ON-SCREEN ENGLISH SUBTITLES\))?) "
+        rf"(?P<weekday>MONDAY|TUESDAY|WEDNESDAY|THURSDAY|"
+        rf"FRIDAY|SATURDAY|SUNDAY) "
+        rf"\| (?P<time>\d{{1,2}}:\d{{2}}[AP]M "
+        rf"(?:EDT|EST)) "
+        rf"AIRBUS IMAX THEATER, CHANTILLY, VA"
+        rf"(?P<following>.*?)"
+        rf"(?=(?:{month_pattern}) \d{{1,2}} |\Z)",
+        re.IGNORECASE,
+    )
+
+    showings = {}
+
+    for match in pattern.finditer(page_text):
+        date = match.group("date").upper()
+        title = match.group("title").upper()
+        weekday = match.group("weekday").upper()
+        time = match.group("time").upper()
+        following_text = match.group("following").lower()
+
+        if "currently sold out" in following_text:
+            status = "sold_out"
+        elif "not currently on sale" in following_text:
+            status = "not_on_sale"
+        else:
+            status = "available"
+
+        key = f"{date}|{time}|{title}"
+
+        showings[key] = {
+            "date": date,
+            "weekday": weekday,
+            "time": time,
+            "title": title,
+            "venue": TARGET_VENUE,
+            "status": status,
+        }
+
+    return showings
 
 
 def load_state():
@@ -119,18 +172,24 @@ def load_state():
         return None
 
     try:
-        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
-    except Exception:
+        return json.loads(
+            STATE_FILE.read_text(encoding="utf-8")
+        )
+    except Exception as error:
+        print(f"Could not read previous state: {error}")
         return None
 
 
-def save_state(text):
+def save_state(showings):
+    state = {
+        "movie": TARGET_MOVIE,
+        "venue": TARGET_VENUE,
+        "showings": showings,
+    }
+
     STATE_FILE.write_text(
         json.dumps(
-            {
-                "fingerprint": fingerprint(text),
-                "text": text,
-            },
+            state,
             indent=2,
             ensure_ascii=False,
         ),
@@ -138,34 +197,30 @@ def save_state(text):
     )
 
 
-def find_new_text(old_text, new_text):
-    old_parts = {
-        part.strip()
-        for part in re.split(r"(?<=[.!?])\s+|\n+", old_text)
-        if len(part.strip()) >= 12
-    }
+def format_showing(showing):
+    title = showing["title"].title()
 
-    new_parts = [
-        part.strip()
-        for part in re.split(r"(?<=[.!?])\s+|\n+", new_text)
-        if len(part.strip()) >= 12
-    ]
-
-    return [part for part in new_parts if part not in old_parts]
+    return (
+        f"{title}\n"
+        f"{showing['weekday'].title()}, "
+        f"{showing['date'].title()} at {showing['time']}\n"
+        f"Airbus IMAX Theater, Chantilly"
+    )
 
 
-def notify(message):
+def send_notification(title, message):
     if not NTFY_TOPIC:
-        print("NTFY_TOPIC has not been configured.")
-        return
+        raise RuntimeError(
+            "NTFY_TOPIC is not configured in GitHub Secrets."
+        )
 
     response = requests.post(
         f"https://ntfy.sh/{NTFY_TOPIC}",
         data=message.encode("utf-8"),
         headers={
-            "Title": "New DMV ticket date detected",
-            "Priority": "high",
-            "Tags": "ticket,calendar",
+            "Title": title,
+            "Priority": "max",
+            "Tags": "ticket,movie_camera,rotating_light",
             "Click": URL,
         },
         timeout=30,
@@ -175,37 +230,85 @@ def notify(message):
 
 
 def main():
-    print("Checking DMV ticket schedule...")
+    print("Checking The Odyssey at Airbus IMAX...")
 
-    current_text = get_page_text()
-    current_hash = fingerprint(current_text)
-    previous = load_state()
+    page_text = get_page_text()
+    current_showings = extract_target_showings(page_text)
 
-    if previous is None:
-        save_state(current_text)
-        print("First check completed. Initial schedule saved.")
+    print(
+        f"Found {len(current_showings)} Odyssey "
+        "showings at Airbus IMAX."
+    )
+
+    for showing in current_showings.values():
+        print(
+            f"{showing['date']} {showing['time']} "
+            f"- {showing['status']}"
+        )
+
+    if not current_showings:
+        raise RuntimeError(
+            "No Odyssey showings at Airbus IMAX were found. "
+            "The website format may have changed."
+        )
+
+    previous_state = load_state()
+
+    # First run after installing this targeted version establishes
+    # a clean baseline and intentionally sends no notification.
+    if previous_state is None or "showings" not in previous_state:
+        save_state(current_showings)
+        print(
+            "Targeted baseline created. "
+            "No notification sent on this run."
+        )
         return
 
-    if previous.get("fingerprint") == current_hash:
-        print("No changes detected.")
-        return
+    previous_showings = previous_state.get("showings", {})
+    alerts = []
 
-    additions = find_new_text(previous.get("text", ""), current_text)
-    save_state(current_text)
+    for key, current in current_showings.items():
+        previous = previous_showings.get(key)
 
-    if additions:
-        summary = "\n\n".join(additions[:10])
+        # A newly added showing is useful only when it appears available.
+        if previous is None and current["status"] == "available":
+            alerts.append(
+                "NEW SHOWING AVAILABLE\n"
+                + format_showing(current)
+            )
+            continue
 
-        notify(
-            "New information appeared on the DMV ticket schedule:\n\n"
-            + summary
-            + "\n\nOpen the schedule: "
+        # An existing unavailable showing has become purchasable.
+        if (
+            previous is not None
+            and previous.get("status") in {
+                "sold_out",
+                "not_on_sale",
+            }
+            and current["status"] == "available"
+        ):
+            alerts.append(
+                "TICKETS NOW AVAILABLE\n"
+                + format_showing(current)
+            )
+
+    save_state(current_showings)
+
+    if alerts:
+        message = (
+            "\n\n--------------------\n\n".join(alerts)
+            + "\n\nOpen the ticket page immediately:\n"
             + URL
         )
 
-        print("New content detected. Notification sent.")
+        send_notification(
+            "The Odyssey Airbus IMAX tickets!",
+            message,
+        )
+
+        print(f"Notification sent with {len(alerts)} alert(s).")
     else:
-        print("The page changed, but no clear new date was identified.")
+        print("No new available Odyssey showings detected.")
 
 
 if __name__ == "__main__":
