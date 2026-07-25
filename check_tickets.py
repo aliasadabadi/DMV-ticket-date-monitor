@@ -28,226 +28,240 @@ TARGET_VENUES = [
 
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
+
 def get_page_text():
-    last_error = None
-
     with sync_playwright() as playwright:
-        browser = None
+        browser = playwright.firefox.launch(headless=True)
 
-        try:
-            print("Launching Firefox...")
+        page = browser.new_page(
+            viewport={
+                "width": 1440,
+                "height": 1600,
+            },
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Firefox/128.0"
+            ),
+        )
 
-            browser = playwright.firefox.launch(
-                headless=True,
-            )
+        captured_responses = []
 
-            page = browser.new_page(
-                viewport={
-                    "width": 1440,
-                    "height": 1600,
-                },
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                    "AppleWebKit/537.36 (KHTML, like Gecko) "
-                    "Firefox/128.0"
-                ),
-            )
+        def record_response(response):
+            request = response.request
 
-            for attempt in range(1, 4):
-                try:
-                    print(
-                        f"Firefox navigation attempt "
-                        f"{attempt} of 3..."
-                    )
+            if request.resource_type in {
+                "xhr",
+                "fetch",
+            }:
+                captured_responses.append(response)
 
-                    # Do not wait for domcontentloaded because this site
-                    # sometimes never reports it cleanly.
-                    page.goto(
-                        URL,
-                        wait_until="commit",
-                        timeout=60000,
-                    )
+                print(
+                    "NETWORK RESPONSE:",
+                    response.status,
+                    request.method,
+                    response.url,
+                )
 
-                    # Wait until schedule content begins appearing.
-                    page.wait_for_function(
-                        """
-                        () => {
-                            const text =
-                                document.body?.innerText || "";
-                            return (
-                                text.includes("EVENTS") &&
-                                text.includes("RESULTS")
-                            );
-                        }
-                        """,
-                        timeout=60000,
-                    )
+        page.on("response", record_response)
 
-                    page.wait_for_timeout(10000)
+        print("Opening schedule page...")
 
-                    captured_batches = []
-                    seen_batches = set()
+        page.goto(
+            URL,
+            wait_until="commit",
+            timeout=60000,
+        )
 
-                    max_clicks = 40
+        page.wait_for_function(
+            """
+            () => {
+                const text =
+                    document.body?.innerText || "";
 
-                    for click_number in range(max_clicks + 1):
-                        current_raw_text = (
-                            page.locator("body").inner_text()
-                        )
-                        current_text = clean_text(current_raw_text)
+                return (
+                    text.includes("EVENTS") &&
+                    text.includes("RESULTS")
+                );
+            }
+            """,
+            timeout=60000,
+        )
 
-                        if current_text not in seen_batches:
-                            seen_batches.add(current_text)
-                            captured_batches.append(current_text)
+        page.wait_for_timeout(10000)
 
-                            print(
-                                f"Captured batch "
-                                f"{len(captured_batches)}: "
-                                f"{len(current_text):,} characters"
-                            )
+        visible_text = clean_text(
+            page.locator("body").inner_text()
+        )
 
-                            print(
-                                "  Contains August:",
-                                "AUG " in current_text.upper(),
-                            )
+        hidden_text = clean_text(
+            page.locator("body").text_content() or ""
+        )
 
-                        page.evaluate(
-                            """
-                            window.scrollTo(
-                                0,
-                                document.body.scrollHeight
-                            )
-                            """
-                        )
-                        page.wait_for_timeout(1500)
+        full_html = page.content()
 
-                        view_more = page.get_by_role(
-                            "button",
-                            name=re.compile(
-                                r"VIEW\s+MORE\s+RESULTS",
-                                re.IGNORECASE,
-                            ),
-                        )
+        print(
+            "Visible text length:",
+            len(visible_text),
+        )
+        print(
+            "All body text length:",
+            len(hidden_text),
+        )
+        print(
+            "HTML length:",
+            len(full_html),
+        )
 
-                        # Fallback in case the site does not expose
-                        # the control with a button role.
-                        if view_more.count() == 0:
-                            view_more = page.get_by_text(
-                                re.compile(
-                                    r"VIEW\s+MORE\s+RESULTS",
-                                    re.IGNORECASE,
-                                ),
-                                exact=False,
-                            )
+        print(
+            "August in visible text:",
+            "AUG " in visible_text.upper(),
+        )
+        print(
+            "August in all body text:",
+            "AUG " in hidden_text.upper(),
+        )
+        print(
+            "August in HTML:",
+            "AUG " in full_html.upper(),
+        )
 
-                        if view_more.count() == 0:
-                            print(
-                                "No View More Results control remains."
-                            )
-                            break
+        view_more_text = page.get_by_text(
+            re.compile(
+                r"VIEW\s+MORE\s+RESULTS",
+                re.IGNORECASE,
+            ),
+            exact=False,
+        )
 
-                        button = view_more.last
-
-                        try:
-                            if not button.is_visible():
-                                print(
-                                    "View More Results is no longer visible."
-                                )
-                                break
-
-                            before_click_text = clean_text(
-                                page.locator("body").inner_text()
-                            )
-
-                            button.scroll_into_view_if_needed()
-                            page.wait_for_timeout(1000)
-
-                            button.click(
-                                timeout=20000,
-                                force=True,
-                            )
-
-                            print(
-                                "Clicked View More Results "
-                                f"{click_number + 1} time(s)."
-                            )
-
-                            # Wait for the content itself to change.
-                            # It does not have to become longer.
-                            try:
-                                page.wait_for_function(
-                                    """
-                                    previousText => {
-                                        const currentText =
-                                            document.body?.innerText || "";
-                                        return currentText !== previousText;
-                                    }
-                                    """,
-                                    arg=before_click_text,
-                                    timeout=30000,
-                                )
-                            except Exception:
-                                print(
-                                    "Page text did not change within "
-                                    "30 seconds after the click."
-                                )
-
-                            # Give any later rendering time to finish.
-                            page.wait_for_timeout(5000)
-
-                        except Exception as click_error:
-                            print(
-                                "Could not load another batch: "
-                                f"{click_error}"
-                            )
-                            break
-
-                    # Combine all captured states. This works whether
-                    # the site appends results or replaces old results.
-                    combined_text = clean_text(
-                        " ".join(captured_batches)
-                    )
-
-                    if len(combined_text) < 50:
-                        raise RuntimeError(
-                            "The schedule contained too little text."
-                        )
-
-                    print(
-                        f"Combined captured text: "
-                        f"{len(combined_text):,} characters."
-                    )
-                    print(
-                        "August present in combined text:",
-                        "AUG " in combined_text.upper(),
-                    )
-                    print(
-                        "Odyssey present in combined text:",
-                        "THE ODYSSEY"
-                        in combined_text.upper(),
-                    )
-
-                    return combined_text
-
-                except Exception as error:
-                    last_error = error
-
-                    print(
-                        f"Firefox attempt {attempt} failed: "
-                        f"{error}"
-                    )
-
-                    if attempt < 3:
-                        page.wait_for_timeout(5000)
+        if view_more_text.count() == 0:
+            browser.close()
 
             raise RuntimeError(
-                "Firefox could not load the schedule after "
-                f"three attempts. Last error: {last_error}"
+                "Could not locate View More Results."
             )
 
-        finally:
-            if browser is not None:
-                browser.close()
+        text_element = view_more_text.last
+
+        interactive_element = text_element.locator(
+            "xpath=ancestor-or-self::*["
+            "self::button or "
+            "self::a or "
+            "@role='button'"
+            "][1]"
+        )
+
+        if interactive_element.count() > 0:
+            button = interactive_element.first
+        else:
+            button = text_element
+
+        try:
+            outer_html = button.evaluate(
+                "element => element.outerHTML"
+            )
+
+            print("VIEW MORE ELEMENT HTML:")
+            print(outer_html)
+
+        except Exception as error:
+            print(
+                "Could not print element HTML:",
+                error,
+            )
+
+        before_text = clean_text(
+            page.locator("body").inner_text()
+        )
+
+        captured_responses.clear()
+
+        button.scroll_into_view_if_needed()
+        page.wait_for_timeout(1000)
+
+        print("Clicking View More Results once...")
+
+        button.click(
+            force=True,
+            timeout=20000,
+        )
+
+        page.wait_for_timeout(15000)
+
+        after_visible_text = clean_text(
+            page.locator("body").inner_text()
+        )
+
+        after_hidden_text = clean_text(
+            page.locator("body").text_content() or ""
+        )
+
+        after_html = page.content()
+
+        print(
+            "Visible text changed:",
+            after_visible_text != before_text,
+        )
+        print(
+            "August after click in visible text:",
+            "AUG " in after_visible_text.upper(),
+        )
+        print(
+            "August after click in all body text:",
+            "AUG " in after_hidden_text.upper(),
+        )
+        print(
+            "August after click in HTML:",
+            "AUG " in after_html.upper(),
+        )
+
+        print(
+            "XHR/fetch responses after click:",
+            len(captured_responses),
+        )
+
+        for response in captured_responses:
+            try:
+                body = response.text()
+
+                print(
+                    "RESPONSE BODY SUMMARY:",
+                    response.url,
+                    "characters=",
+                    len(body),
+                    "contains August=",
+                    "AUG " in body.upper(),
+                    "contains Odyssey=",
+                    "ODYSSEY" in body.upper(),
+                )
+
+                if (
+                    "AUG " in body.upper()
+                    or "ODYSSEY" in body.upper()
+                ):
+                    print(
+                        "RELEVANT RESPONSE URL:",
+                        response.url,
+                    )
+
+                    print(
+                        "RESPONSE PREVIEW:",
+                        body[:3000],
+                    )
+
+            except Exception as error:
+                print(
+                    "Could not read response body:",
+                    response.url,
+                    error,
+                )
+
+        browser.close()
+
+        # Return the broadest page text for this diagnostic run.
+        return after_hidden_text
+
+
 
 def extract_target_showings(page_text):
     """
