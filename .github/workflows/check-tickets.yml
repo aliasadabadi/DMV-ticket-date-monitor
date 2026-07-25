@@ -1,0 +1,52 @@
+name: Check DMV ticket dates
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "7 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  check-tickets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python packages
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Check ticket schedule
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python check_tickets.py
+
+      - name: Save latest schedule
+        run: |
+          if [ -f ticket_state.json ]; then
+            git config user.name "DMV Ticket Monitor"
+            git config user.email "actions@github.com"
+            git add ticket_state.json
+
+            if git diff --cached --quiet; then
+              echo "No schedule-state changes to save."
+            else
+              git commit -m "Update ticket schedule state"
+              git push
+            fi
+          else
+            echo "No ticket_state.json file was created."
+          fi
