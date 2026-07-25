@@ -290,13 +290,10 @@ def save_state(showings):
         encoding="utf-8",
     )
 
-
 def format_showing(showing):
-    title = showing["title"].title()
     venue = showing["venue"].title()
 
     return (
-        f"{title}\n"
         f"{showing['weekday'].title()}, "
         f"{showing['date'].title()} at {showing['time']}\n"
         f"{venue}"
@@ -398,15 +395,20 @@ def main():
     for key, current in current_showings.items():
         previous = previous_showings.get(key)
 
-        # A newly added showing is useful only when it appears available.
-        if previous is None and current["status"] == "available":
+            alerts = []
+
+    for key, current in current_showings.items():
+        previous = previous_showings.get(key)
+
+        if (
+            previous is None
+            and current["status"] == "available"
+        ):
             alerts.append(
-                "NEW SHOWING AVAILABLE\n"
-                + format_showing(current)
+                ("new", current)
             )
             continue
 
-        # An existing unavailable showing has become purchasable.
         if (
             previous is not None
             and previous.get("status") in {
@@ -416,34 +418,84 @@ def main():
             and current["status"] == "available"
         ):
             alerts.append(
-                "TICKETS NOW AVAILABLE\n"
-                + format_showing(current)
+                ("became_available", current)
             )
 
     save_state(current_showings)
 
     if alerts:
-        message = (
-            "\n\n--------------------\n\n".join(alerts)
-            + "\n\nOpen the ticket page immediately:\n"
-            + URL
+        available_showings = []
+
+        for alert_type, showing in alerts:
+            available_showings.append(
+                {
+                    "alert_type": alert_type,
+                    "showing": showing,
+                }
+            )
+        available_showings.sort(
+            key=lambda item: item["showing"]["date_time"]
         )
-
-        subject = "The Odyssey Airbus IMAX tickets!"
-
+        lines = [
+            "The Odyssey tickets are available.",
+            "",
+            f"{len(available_showings)} showing(s) detected:",
+            "",
+        ]
+        for index, item in enumerate(
+            available_showings,
+            start=1,
+        ):
+            showing = item["showing"]
+            alert_type = item["alert_type"]
+            if alert_type == "new":
+                label = "New showing"
+            else:
+                label = "Tickets became available"
+            lines.extend(
+                [
+                    f"{index}. {label}",
+                    format_showing(showing),
+                    "",
+                ]
+            )
+        lines.extend(
+            [
+                "Open the ticket page:",
+                URL,
+            ]
+        )
+        message = "\n".join(lines)
+        subject = (
+            f"The Odyssey: "
+            f"{len(available_showings)} available showing(s)"
+        )
         try:
-            send_notification(subject, message)
+            send_notification(
+                subject,
+                message,
+            )
         except Exception as error:
-            print(f"ntfy notification failed: {error}")
-
+            print(
+                f"ntfy notification failed: {error}"
+            )
         try:
-            send_email_notification(subject, message)
+            send_email_notification(
+                subject,
+                message,
+            )
         except Exception as error:
-            print(f"Email notification failed: {error}")
-
-        print(f"Notification sent with {len(alerts)} alert(s).")
+            print(
+                f"Email notification failed: {error}"
+            )
+        print(
+            f"Sent one combined notification for "
+            f"{len(available_showings)} showing(s)."
+        )
     else:
-        print("No new available Odyssey showings detected.")
+        print(
+            "No new available Odyssey showings detected."
+        )
 
 
 if __name__ == "__main__":
