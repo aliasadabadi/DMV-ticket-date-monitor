@@ -32,6 +32,9 @@ jobs:
       - name: Check ticket schedule
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
+          EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
         run: python check_tickets.py
 
       - name: Save latest schedule
