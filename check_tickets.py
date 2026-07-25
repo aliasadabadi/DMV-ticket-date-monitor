@@ -4,7 +4,6 @@ import re
 from pathlib import Path
 
 import requests
-from playwright.sync_api import sync_playwright
 import smtplib
 from email.message import EmailMessage
 from datetime import datetime
