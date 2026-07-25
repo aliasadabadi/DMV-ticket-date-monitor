@@ -43,7 +43,7 @@ jobs:
           if [ -f ticket_state.json ]; then
             git config user.name "DMV Ticket Monitor"
             git config user.email "actions@github.com"
-            git add ticket_state.json
+            git add ticket_state.json schedule_api.json
 
             if git diff --cached --quiet; then
               echo "No schedule-state changes to save."
