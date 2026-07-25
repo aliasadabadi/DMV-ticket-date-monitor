@@ -339,21 +339,32 @@ def send_email_notification(subject, message):
         print("Email secrets are not fully configured.")
         return
 
+    recipients = [
+        email.strip()
+        for email in EMAIL_TO.split(",")
+        if email.strip()
+    ]
+
     email = EmailMessage()
     email["Subject"] = subject
     email["From"] = EMAIL_USERNAME
-    email["To"] = EMAIL_TO
+    email["To"] = ", ".join(recipients)
     email.set_content(message)
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+    with smtplib.SMTP_SSL(
+        "smtp.gmail.com",
+        465,
+    ) as smtp:
         smtp.login(
             EMAIL_USERNAME,
             EMAIL_APP_PASSWORD,
         )
         smtp.send_message(email)
 
-    print("Email notification sent successfully.")
-
+    print(
+        f"Email notification sent to "
+        f"{len(recipients)} recipient(s)."
+    )
 def main():
     print(
         "Checking The Odyssey at Airbus "
