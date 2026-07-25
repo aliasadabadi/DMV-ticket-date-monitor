@@ -1,8 +1,11 @@
 {
   "movie": "THE ODYSSEY",
-  "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
+  "venues": [
+    "AIRBUS IMAX THEATER, CHANTILLY, VA",
+    "LOCKHEED MARTIN IMAX THEATER, WASHINGTON, DC"
+  ],
   "showings": {
-    "JUL 25|5:30PM EDT|THE ODYSSEY": {
+    "JUL 25|5:30PM EDT|THE ODYSSEY|AIRBUS IMAX THEATER, CHANTILLY, VA": {
       "date": "JUL 25",
       "weekday": "SATURDAY",
       "time": "5:30PM EDT",
@@ -10,7 +13,7 @@
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
       "status": "available"
     },
-    "JUL 25|9:15PM EDT|THE ODYSSEY": {
+    "JUL 25|9:15PM EDT|THE ODYSSEY|AIRBUS IMAX THEATER, CHANTILLY, VA": {
       "date": "JUL 25",
       "weekday": "SATURDAY",
       "time": "9:15PM EDT",
@@ -18,7 +21,7 @@
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
       "status": "sold_out"
     },
-    "JUL 26|5:30PM EDT|THE ODYSSEY": {
+    "JUL 26|5:30PM EDT|THE ODYSSEY|AIRBUS IMAX THEATER, CHANTILLY, VA": {
       "date": "JUL 26",
       "weekday": "SUNDAY",
       "time": "5:30PM EDT",
@@ -26,7 +29,7 @@
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
       "status": "available"
     },
-    "JUL 26|9:15PM EDT|THE ODYSSEY": {
+    "JUL 26|9:15PM EDT|THE ODYSSEY|AIRBUS IMAX THEATER, CHANTILLY, VA": {
       "date": "JUL 26",
       "weekday": "SUNDAY",
       "time": "9:15PM EDT",
@@ -34,7 +37,7 @@
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
       "status": "sold_out"
     },
-    "JUL 29|5:30PM EDT|THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)": {
+    "JUL 29|5:30PM EDT|THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)|AIRBUS IMAX THEATER, CHANTILLY, VA": {
       "date": "JUL 29",
       "weekday": "WEDNESDAY",
       "time": "5:30PM EDT",
@@ -42,7 +45,7 @@
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
       "status": "sold_out"
     },
-    "JUL 29|9:15PM EDT|THE ODYSSEY": {
+    "JUL 29|9:15PM EDT|THE ODYSSEY|AIRBUS IMAX THEATER, CHANTILLY, VA": {
       "date": "JUL 29",
       "weekday": "WEDNESDAY",
       "time": "9:15PM EDT",
