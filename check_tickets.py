@@ -21,32 +21,93 @@ NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
 
-
 def get_page_text():
+    last_error = None
+
     with sync_playwright() as playwright:
-        browser = playwright.chromium.launch(headless=True)
-
-        page = browser.new_page(
-            viewport={"width": 1440, "height": 1600},
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/126.0 Safari/537.36"
+        browser_options = [
+            (
+                "Chromium",
+                lambda: playwright.chromium.launch(
+                    headless=True,
+                    args=["--disable-http2"],
+                ),
             ),
-        )
+            (
+                "Firefox",
+                lambda: playwright.firefox.launch(headless=True),
+            ),
+        ]
 
-        page.goto(URL, wait_until="domcontentloaded", timeout=90000)
-        page.wait_for_timeout(12000)
+        for browser_name, launch_browser in browser_options:
+            browser = None
 
-        text = page.locator("body").inner_text()
-        browser.close()
+            try:
+                print(f"Trying {browser_name}...")
 
-    text = clean_text(text)
+                browser = launch_browser()
 
-    if len(text) < 50:
-        raise RuntimeError("The schedule page did not load enough content.")
+                page = browser.new_page(
+                    viewport={"width": 1440, "height": 1600},
+                    user_agent=(
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/126.0 Safari/537.36"
+                    ),
+                )
 
-    return text
+                for attempt in range(1, 4):
+                    try:
+                        print(
+                            f"{browser_name} navigation attempt "
+                            f"{attempt} of 3..."
+                        )
+
+                        page.goto(
+                            URL,
+                            wait_until="domcontentloaded",
+                            timeout=90000,
+                        )
+
+                        page.wait_for_timeout(15000)
+
+                        text = clean_text(
+                            page.locator("body").inner_text()
+                        )
+
+                        if len(text) >= 50:
+                            print(
+                                f"Schedule loaded successfully "
+                                f"with {browser_name}."
+                            )
+                            return text
+
+                        raise RuntimeError(
+                            "The page loaded but contained too little text."
+                        )
+
+                    except Exception as error:
+                        last_error = error
+                        print(
+                            f"{browser_name} attempt {attempt} failed: "
+                            f"{error}"
+                        )
+
+                        if attempt < 3:
+                            page.wait_for_timeout(5000)
+
+            except Exception as error:
+                last_error = error
+                print(f"{browser_name} failed: {error}")
+
+            finally:
+                if browser is not None:
+                    browser.close()
+
+    raise RuntimeError(
+        "Could not load the Tickets.com schedule after trying "
+        f"Chromium and Firefox. Last error: {last_error}"
+    )
 
 
 def fingerprint(text):
