@@ -7,13 +7,17 @@ import requests
 from playwright.sync_api import sync_playwright
 import smtplib
 from email.message import EmailMessage
+from datetime import datetime
 
 URL = (
     "https://mpv.tickets.com/schedule/"
     "?agency=SETH_SNG_MPV&orgid=51529"
     "#/?view=list&includePackages=true"
 )
-
+API_URL = (
+    "https://mpv.tickets.com/api/pvodc/v1/eventschedule/"
+    "?orgId=51529&agency=SETH_SNG_MPV"
+)
 STATE_FILE = Path("ticket_state.json")
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
 EMAIL_USERNAME = os.environ.get("EMAIL_USERNAME", "")
@@ -28,159 +32,208 @@ TARGET_VENUES = [
 
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
-
-def page_text_from_api(api_text):
+def get_schedule_data():
     """
-    Recursively collect all text values from the API JSON.
-
-    This is temporary. Once we see the JSON structure, we will
-    extract showings directly by field name instead.
+    Download the complete structured schedule directly from
+    the Tickets.com API.
     """
-    data = json.loads(api_text)
-    values = []
 
-    def collect(value):
-        if isinstance(value, dict):
-            for item in value.values():
-                collect(item)
+    headers = {
+        "Accept": "application/json",
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+            "AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
+        ),
+    }
 
-        elif isinstance(value, list):
-            for item in value:
-                collect(item)
+    last_error = None
 
-        elif isinstance(value, str):
-            values.append(value)
-
-        elif value is not None:
-            values.append(str(value))
-
-    collect(data)
-
-    return " ".join(values)
-    
-def get_page_text():
-    with sync_playwright() as playwright:
-        browser = playwright.firefox.launch(headless=True)
-
-        page = browser.new_page(
-            viewport={
-                "width": 1440,
-                "height": 1600,
-            },
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Firefox/128.0"
-            ),
-        )
-
-        print("Opening schedule page and waiting for API response...")
-
-        with page.expect_response(
-            lambda response: (
-                "/api/pvodc/v1/eventschedule/" in response.url
-                and response.status == 200
-            ),
-            timeout=120000,
-        ) as response_info:
-
-            page.goto(
-                URL,
-                wait_until="commit",
-                timeout=60000,
+    for attempt in range(1, 4):
+        try:
+            print(
+                f"Downloading schedule API, attempt "
+                f"{attempt} of 3..."
             )
 
-        response = response_info.value
-        api_text = response.text()
+            response = requests.get(
+                API_URL,
+                headers=headers,
+                timeout=90,
+            )
 
-        print("Schedule API URL:")
-        print(response.url)
+            response.raise_for_status()
 
-        print("Schedule API response length:")
-        print(len(api_text))
+            data = response.json()
 
-        print("Contains August:")
-        print("AUG" in api_text.upper())
+            events = (
+                data
+                .get("eventSchedule", {})
+                .get("events", [])
+            )
 
-        print("Contains Odyssey:")
-        print("ODYSSEY" in api_text.upper())
+            if not isinstance(events, list):
+                raise RuntimeError(
+                    "The API events field was not a list."
+                )
 
-        print("API RESPONSE PREVIEW:")
-        print(api_text[:10000])
-        
-        Path("schedule_api.json").write_text(
-            api_text,
-            encoding="utf-8",
-        )
+            if not events:
+                raise RuntimeError(
+                    "The API returned no schedule events."
+                )
 
-        combined_text = clean_text(
-            page_text_from_api(api_text)
-        )
+            print(
+                f"Schedule API returned "
+                f"{len(events)} total events."
+            )
 
-        browser.close()
+            return data
 
-        return combined_text
-def extract_target_showings(page_text):
+        except Exception as error:
+            last_error = error
+
+            print(
+                f"Schedule API attempt {attempt} failed: "
+                f"{error}"
+            )
+
+            if attempt < 3:
+                import time
+                time.sleep(5)
+
+    raise RuntimeError(
+        "Could not download the schedule API after "
+        f"three attempts. Last error: {last_error}"
+    )
+
+def extract_target_showings(schedule_data):
     """
-    Extract The Odyssey showings at all target IMAX venues.
-
-    Each showing is uniquely identified by:
-    date + time + title + venue.
+    Extract all The Odyssey performances at the selected venues
+    directly from the structured Tickets.com API response.
     """
 
-    month_pattern = (
-        r"JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC"
+    events = (
+        schedule_data
+        .get("eventSchedule", {})
+        .get("events", [])
     )
 
-    venue_pattern = "|".join(
-        re.escape(venue) for venue in TARGET_VENUES
-    )
-
-    pattern = re.compile(
-        rf"(?P<date>(?:{month_pattern}) \d{{1,2}}) "
-        rf"(?P<title>THE ODYSSEY"
-        rf"(?: - OPEN CAPTION \(ON-SCREEN ENGLISH SUBTITLES\))?) "
-        rf"(?P<weekday>MONDAY|TUESDAY|WEDNESDAY|THURSDAY|"
-        rf"FRIDAY|SATURDAY|SUNDAY) "
-        rf"\| (?P<time>\d{{1,2}}:\d{{2}}[AP]M "
-        rf"(?:EDT|EST)) "
-        rf"(?P<venue>{venue_pattern})"
-        rf"(?P<following>.*?)"
-        rf"(?=(?:{month_pattern}) \d{{1,2}} |\Z)",
-        re.IGNORECASE,
-    )
+    target_venues_upper = {
+        venue.upper() for venue in TARGET_VENUES
+    }
 
     showings = {}
 
-    for match in pattern.finditer(page_text):
-        date = match.group("date").upper()
-        title = match.group("title").upper()
-        weekday = match.group("weekday").upper()
-        time = match.group("time").upper()
-        venue = match.group("venue").upper()
-        following_text = match.group("following").lower()
+    for event in events:
+        title = str(
+            event.get("description", "")
+        ).strip()
 
-        if "currently sold out" in following_text:
+        venue = str(
+            event.get("venueDescription", "")
+        ).strip()
+
+        title_upper = title.upper()
+        venue_upper = venue.upper()
+
+        # Includes ordinary and open-caption Odyssey listings.
+        if not title_upper.startswith(TARGET_MOVIE):
+            continue
+
+        if venue_upper not in target_venues_upper:
+            continue
+
+        date_details = event.get("dateDetails") or {}
+        date_time_text = date_details.get("dateTime")
+
+        if not date_time_text:
+            print(
+                "Skipping an Odyssey event with no dateTime:",
+                event.get("id"),
+            )
+            continue
+
+        try:
+            event_datetime = datetime.fromisoformat(
+                date_time_text
+            )
+        except ValueError:
+            print(
+                "Skipping an event with an invalid dateTime:",
+                date_time_text,
+            )
+            continue
+
+        timezone_abbreviation = (
+            date_details.get("timeZoneAbbreviation")
+            or ""
+        ).upper()
+
+        date_display = event_datetime.strftime(
+            "%b %d"
+        ).upper()
+
+        weekday = event_datetime.strftime(
+            "%A"
+        ).upper()
+
+        # %-I does not work on Windows, but GitHub runs Linux.
+        # This alternative works everywhere.
+        hour = event_datetime.strftime("%I").lstrip("0")
+        minute = event_datetime.strftime("%M")
+        am_pm = event_datetime.strftime("%p")
+
+        time_display = f"{hour}:{minute}{am_pm}"
+
+        if timezone_abbreviation:
+            time_display += f" {timezone_abbreviation}"
+
+        sold_out = bool(
+            event.get("soldoutFlag", False)
+        )
+
+        on_sale = bool(
+            event.get("onsaleFlag", False)
+        )
+
+        if sold_out:
             status = "sold_out"
-        elif "not currently on sale" in following_text:
+        elif not on_sale:
             status = "not_on_sale"
         else:
             status = "available"
 
-        # Venue is included because both theaters could have
-        # the same movie at the same date and time.
-        key = f"{date}|{time}|{title}|{venue}"
+        # The API performance ID is the most reliable unique key.
+        performance_id = str(
+            event.get("id", "")
+        ).strip()
+
+        if performance_id:
+            key = performance_id
+        else:
+            key = (
+                f"{date_time_text}|"
+                f"{title_upper}|"
+                f"{venue_upper}"
+            )
 
         showings[key] = {
-            "date": date,
+            "performance_id": performance_id,
+            "date": date_display,
+            "date_time": date_time_text,
             "weekday": weekday,
-            "time": time,
-            "title": title,
-            "venue": venue,
+            "time": time_display,
+            "title": title_upper,
+            "venue": venue_upper,
             "status": status,
+            "onsale": on_sale,
+            "sold_out": sold_out,
+            "event_id": str(
+                event.get("eventId", "")
+            ),
         }
 
     return showings
+
 
 def load_state():
     if not STATE_FILE.exists():
@@ -267,27 +320,38 @@ def send_email_notification(subject, message):
         smtp.send_message(email)
 
     print("Email notification sent successfully.")
-    
+
+
 def main():
-    print("Checking The Odyssey at Airbus and Lockheed IMAX...")
-    page_text = get_page_text()
-    current_showings = extract_target_showings(page_text)
+    print(
+        "Checking The Odyssey at Airbus "
+        "and Lockheed IMAX..."
+    )
+    schedule_data = get_schedule_data()
+    current_showings = extract_target_showings(
+        schedule_data
+    )
 
     print(
         f"Found {len(current_showings)} Odyssey "
         "showings across the target IMAX venues."
     )
-
-    for showing in current_showings.values():
+    
+    for showing in sorted(
+        current_showings.values(),
+        key=lambda item: item["date_time"],
+    ):
         print(
-            f"{showing['date']} {showing['time']} "
+            f"{showing['date']} "
+            f"{showing['time']} "
+            f"- {showing['venue']} "
             f"- {showing['status']}"
         )
 
     if not current_showings:
         raise RuntimeError(
-            "No Odyssey showings were found at either target venue. "
-            "The website format may have changed."
+            "No Odyssey showings were found at either "
+            "target venue. The API format may have changed."
         )
 
     previous_state = load_state()
