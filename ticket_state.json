@@ -2,7 +2,7 @@
   "movie": "THE ODYSSEY",
   "venues": [
     "AIRBUS IMAX THEATER, CHANTILLY, VA",
-    "LOCKHEED MARTIN IMAX THEATER, WASHINGTON, DC"
+    "LOCKHEED IMAX THEATER, WASHINGTON, DC"
   ],
   "showings": {
     "9743020": {
@@ -44,6 +44,19 @@
       "sold_out": false,
       "event_id": "127459"
     },
+    "9742996": {
+      "performance_id": "9742996",
+      "date": "JUL 26",
+      "date_time": "2026-07-26T18:30-04:00",
+      "weekday": "SUNDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "127441"
+    },
     "9760447": {
       "performance_id": "9760447",
       "date": "JUL 26",
@@ -57,6 +70,19 @@
       "sold_out": true,
       "event_id": "129337"
     },
+    "9760445": {
+      "performance_id": "9760445",
+      "date": "JUL 27",
+      "date_time": "2026-07-27T18:30-04:00",
+      "weekday": "MONDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "129336"
+    },
     "9743039": {
       "performance_id": "9743039",
       "date": "JUL 29",
@@ -69,6 +95,19 @@
       "onsale": true,
       "sold_out": true,
       "event_id": "127464"
+    },
+    "9742997": {
+      "performance_id": "9742997",
+      "date": "JUL 29",
+      "date_time": "2026-07-29T18:30-04:00",
+      "weekday": "WEDNESDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "127442"
     },
     "9760448": {
       "performance_id": "9760448",
@@ -96,6 +135,19 @@
       "sold_out": true,
       "event_id": "127460"
     },
+    "9743002": {
+      "performance_id": "9743002",
+      "date": "JUL 30",
+      "date_time": "2026-07-30T18:30-04:00",
+      "weekday": "THURSDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "127445"
+    },
     "9757342": {
       "performance_id": "9757342",
       "date": "JUL 30",
@@ -122,6 +174,19 @@
       "sold_out": true,
       "event_id": "127461"
     },
+    "9742981": {
+      "performance_id": "9742981",
+      "date": "JUL 31",
+      "date_time": "2026-07-31T18:30-04:00",
+      "weekday": "FRIDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "127434"
+    },
     "9757343": {
       "performance_id": "9757343",
       "date": "JUL 31",
@@ -134,6 +199,19 @@
       "onsale": true,
       "sold_out": true,
       "event_id": "129099"
+    },
+    "9763171": {
+      "performance_id": "9763171",
+      "date": "JUL 31",
+      "date_time": "2026-07-31T21:45-04:00",
+      "weekday": "FRIDAY",
+      "time": "9:45PM EDT",
+      "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "129358"
     },
     "9743025": {
       "performance_id": "9743025",
@@ -148,6 +226,19 @@
       "sold_out": true,
       "event_id": "127462"
     },
+    "9742982": {
+      "performance_id": "9742982",
+      "date": "AUG 01",
+      "date_time": "2026-08-01T18:30-04:00",
+      "weekday": "SATURDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "127433"
+    },
     "9757344": {
       "performance_id": "9757344",
       "date": "AUG 01",
@@ -160,6 +251,19 @@
       "onsale": true,
       "sold_out": true,
       "event_id": "129098"
+    },
+    "9763169": {
+      "performance_id": "9763169",
+      "date": "AUG 01",
+      "date_time": "2026-08-01T21:45-04:00",
+      "weekday": "SATURDAY",
+      "time": "9:45PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "129357"
     },
     "9743040": {
       "performance_id": "9743040",
@@ -174,6 +278,19 @@
       "sold_out": true,
       "event_id": "127463"
     },
+    "9743003": {
+      "performance_id": "9743003",
+      "date": "AUG 02",
+      "date_time": "2026-08-02T18:30-04:00",
+      "weekday": "SUNDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "127444"
+    },
     "9760449": {
       "performance_id": "9760449",
       "date": "AUG 02",
@@ -187,6 +304,32 @@
       "sold_out": false,
       "event_id": "129339"
     },
+    "9764077": {
+      "performance_id": "9764077",
+      "date": "AUG 03",
+      "date_time": "2026-08-03T18:30-04:00",
+      "weekday": "MONDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "129360"
+    },
+    "9764081": {
+      "performance_id": "9764081",
+      "date": "AUG 04",
+      "date_time": "2026-08-04T18:30-04:00",
+      "weekday": "TUESDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "129361"
+    },
     "9759908": {
       "performance_id": "9759908",
       "date": "AUG 05",
@@ -199,6 +342,19 @@
       "onsale": true,
       "sold_out": false,
       "event_id": "129330"
+    },
+    "9760377": {
+      "performance_id": "9760377",
+      "date": "AUG 05",
+      "date_time": "2026-08-05T18:30-04:00",
+      "weekday": "WEDNESDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "129331"
     },
     "9760454": {
       "performance_id": "9760454",
@@ -226,6 +382,19 @@
       "sold_out": false,
       "event_id": "129100"
     },
+    "9757335": {
+      "performance_id": "9757335",
+      "date": "AUG 06",
+      "date_time": "2026-08-06T18:30-04:00",
+      "weekday": "THURSDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "available",
+      "onsale": true,
+      "sold_out": false,
+      "event_id": "129093"
+    },
     "9760424": {
       "performance_id": "9760424",
       "date": "AUG 06",
@@ -251,6 +420,19 @@
       "onsale": true,
       "sold_out": false,
       "event_id": "129101"
+    },
+    "9757337": {
+      "performance_id": "9757337",
+      "date": "AUG 07",
+      "date_time": "2026-08-07T18:30-04:00",
+      "weekday": "FRIDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "129095"
     },
     "9760425": {
       "performance_id": "9760425",
@@ -278,6 +460,19 @@
       "sold_out": false,
       "event_id": "129102"
     },
+    "9757338": {
+      "performance_id": "9757338",
+      "date": "AUG 08",
+      "date_time": "2026-08-08T18:30-04:00",
+      "weekday": "SATURDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "129094"
+    },
     "9760426": {
       "performance_id": "9760426",
       "date": "AUG 08",
@@ -303,6 +498,19 @@
       "onsale": true,
       "sold_out": false,
       "event_id": "129329"
+    },
+    "9760378": {
+      "performance_id": "9760378",
+      "date": "AUG 09",
+      "date_time": "2026-08-09T18:30-04:00",
+      "weekday": "SUNDAY",
+      "time": "6:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
+      "status": "sold_out",
+      "onsale": true,
+      "sold_out": true,
+      "event_id": "129332"
     },
     "9760455": {
       "performance_id": "9760455",
