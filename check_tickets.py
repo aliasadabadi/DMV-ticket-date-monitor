@@ -5,7 +5,8 @@ from pathlib import Path
 
 import requests
 from playwright.sync_api import sync_playwright
-
+import smtplib
+from email.message import EmailMessage
 
 URL = (
     "https://mpv.tickets.com/schedule/"
@@ -231,7 +232,30 @@ def send_notification(title, message):
 
     response.raise_for_status()
 
+def send_email_notification(subject, message):
+    if not all([
+        EMAIL_USERNAME,
+        EMAIL_APP_PASSWORD,
+        EMAIL_TO,
+    ]):
+        print("Email secrets are not fully configured.")
+        return
 
+    email = EmailMessage()
+    email["Subject"] = subject
+    email["From"] = EMAIL_USERNAME
+    email["To"] = EMAIL_TO
+    email.set_content(message)
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(
+            EMAIL_USERNAME,
+            EMAIL_APP_PASSWORD,
+        )
+        smtp.send_message(email)
+
+    print("Email notification sent successfully.")
+    
 def main():
     print("Checking The Odyssey at Airbus IMAX...")
 
@@ -304,10 +328,17 @@ def main():
             + URL
         )
 
-        send_notification(
-            "The Odyssey Airbus IMAX tickets!",
-            message,
-        )
+        subject = "The Odyssey Airbus IMAX tickets!"
+
+        try:
+            send_notification(subject, message)
+        except Exception as error:
+            print(f"ntfy notification failed: {error}")
+
+        try:
+            send_email_notification(subject, message)
+        except Exception as error:
+            print(f"Email notification failed: {error}")
 
         print(f"Notification sent with {len(alerts)} alert(s).")
     else:
