@@ -28,73 +28,110 @@ TARGET_VENUES = [
 
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
-
 def get_page_text():
     last_error = None
 
     with sync_playwright() as playwright:
-        browser_options = [
-            (
-                "Chromium",
-                lambda: playwright.chromium.launch(
-                    headless=True,
-                    args=["--disable-http2"],
+        browser = None
+
+        try:
+            print("Launching Firefox...")
+
+            browser = playwright.firefox.launch(
+                headless=True,
+            )
+
+            page = browser.new_page(
+                viewport={
+                    "width": 1440,
+                    "height": 1600,
+                },
+                user_agent=(
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Firefox/128.0"
                 ),
-            ),
-            (
-                "Firefox",
-                lambda: playwright.firefox.launch(
-                    headless=True,
-                ),
-            ),
-        ]
+            )
 
-        for browser_name, launch_browser in browser_options:
-            browser = None
+            for attempt in range(1, 4):
+                try:
+                    print(
+                        f"Firefox navigation attempt "
+                        f"{attempt} of 3..."
+                    )
 
-            try:
-                print(f"Trying {browser_name}...")
-                browser = launch_browser()
+                    # Do not wait for domcontentloaded because this site
+                    # sometimes never reports it cleanly.
+                    page.goto(
+                        URL,
+                        wait_until="commit",
+                        timeout=60000,
+                    )
 
-                page = browser.new_page(
-                    viewport={
-                        "width": 1440,
-                        "height": 1600,
-                    },
-                    user_agent=(
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                        "AppleWebKit/537.36 (KHTML, like Gecko) "
-                        "Chrome/126.0 Safari/537.36"
-                    ),
-                )
+                    # Wait until schedule content begins appearing.
+                    page.wait_for_function(
+                        """
+                        () => {
+                            const text =
+                                document.body?.innerText || "";
+                            return (
+                                text.includes("EVENTS") &&
+                                text.includes("RESULTS")
+                            );
+                        }
+                        """,
+                        timeout=60000,
+                    )
 
-                for attempt in range(1, 4):
-                    try:
-                        print(
-                            f"{browser_name} navigation attempt "
-                            f"{attempt} of 3..."
+                    page.wait_for_timeout(10000)
+
+                    captured_batches = []
+                    seen_batches = set()
+
+                    max_clicks = 40
+
+                    for click_number in range(max_clicks + 1):
+                        current_raw_text = (
+                            page.locator("body").inner_text()
                         )
+                        current_text = clean_text(current_raw_text)
 
-                        page.goto(
-                            URL,
-                            wait_until="domcontentloaded",
-                            timeout=90000,
-                        )
+                        if current_text not in seen_batches:
+                            seen_batches.add(current_text)
+                            captured_batches.append(current_text)
 
-                        # Allow the first batch of events to load.
-                        page.wait_for_timeout(15000)
-
-                        view_more_clicks = 0
-                        max_view_more_clicks = 30
-
-                        while view_more_clicks < max_view_more_clicks:
-                            # Scroll down so lazy-loaded controls become visible.
-                            page.evaluate(
-                                "window.scrollTo(0, document.body.scrollHeight)"
+                            print(
+                                f"Captured batch "
+                                f"{len(captured_batches)}: "
+                                f"{len(current_text):,} characters"
                             )
-                            page.wait_for_timeout(2000)
 
-                            # Try several ways of locating the button.
+                            print(
+                                "  Contains August:",
+                                "AUG " in current_text.upper(),
+                            )
+
+                        page.evaluate(
+                            """
+                            window.scrollTo(
+                                0,
+                                document.body.scrollHeight
+                            )
+                            """
+                        )
+                        page.wait_for_timeout(1500)
+
+                        view_more = page.get_by_role(
+                            "button",
+                            name=re.compile(
+                                r"VIEW\s+MORE\s+RESULTS",
+                                re.IGNORECASE,
+                            ),
+                        )
+
+                        # Fallback in case the site does not expose
+                        # the control with a button role.
+                        if view_more.count() == 0:
                             view_more = page.get_by_text(
                                 re.compile(
                                     r"VIEW\s+MORE\s+RESULTS",
@@ -103,120 +140,114 @@ def get_page_text():
                                 exact=False,
                             )
 
-                            if view_more.count() == 0:
+                        if view_more.count() == 0:
+                            print(
+                                "No View More Results control remains."
+                            )
+                            break
+
+                        button = view_more.last
+
+                        try:
+                            if not button.is_visible():
                                 print(
-                                    "No View More Results button remains."
+                                    "View More Results is no longer visible."
                                 )
                                 break
 
-                            button = view_more.last
-
-                            try:
-                                if not button.is_visible():
-                                    print(
-                                        "View More Results exists but "
-                                        "is no longer visible."
-                                    )
-                                    break
-
-                                previous_text_length = len(
-                                    page.locator("body").inner_text()
-                                )
-
-                                button.scroll_into_view_if_needed()
-                                page.wait_for_timeout(1000)
-
-                                button.click(
-                                    timeout=15000,
-                                    force=True,
-                                )
-
-                                view_more_clicks += 1
-
-                                print(
-                                    "Clicked View More Results "
-                                    f"{view_more_clicks} time(s)."
-                                )
-
-                                # Wait for additional listings to load.
-                                page.wait_for_timeout(5000)
-
-                                new_text_length = len(
-                                    page.locator("body").inner_text()
-                                )
-
-                                if new_text_length <= previous_text_length:
-                                    print(
-                                        "No additional page text appeared "
-                                        "after clicking."
-                                    )
-                                    break
-
-                            except Exception as click_error:
-                                print(
-                                    "Could not click View More Results: "
-                                    f"{click_error}"
-                                )
-                                break
-
-                        # Return to the top is not necessary, but helps ensure
-                        # the page has completed rendering.
-                        page.evaluate("window.scrollTo(0, 0)")
-                        page.wait_for_timeout(2000)
-
-                        text = clean_text(
-                            page.locator("body").inner_text()
-                        )
-
-                        if len(text) < 50:
-                            raise RuntimeError(
-                                "Page loaded but contained too little text."
+                            before_click_text = clean_text(
+                                page.locator("body").inner_text()
                             )
 
-                        print(
-                            f"Schedule loaded successfully with "
-                            f"{browser_name}."
-                        )
-                        print(
-                            f"Captured {len(text):,} characters of "
-                            "schedule text."
-                        )
+                            button.scroll_into_view_if_needed()
+                            page.wait_for_timeout(1000)
 
-                        # Diagnostic checks.
-                        print(
-                            "August present in captured page:",
-                            "AUG " in text.upper(),
-                        )
-                        print(
-                            "Odyssey present in captured page:",
-                            "THE ODYSSEY" in text.upper(),
-                        )
+                            button.click(
+                                timeout=20000,
+                                force=True,
+                            )
 
-                        return text
+                            print(
+                                "Clicked View More Results "
+                                f"{click_number + 1} time(s)."
+                            )
 
-                    except Exception as error:
-                        last_error = error
+                            # Wait for the content itself to change.
+                            # It does not have to become longer.
+                            try:
+                                page.wait_for_function(
+                                    """
+                                    previousText => {
+                                        const currentText =
+                                            document.body?.innerText || "";
+                                        return currentText !== previousText;
+                                    }
+                                    """,
+                                    arg=before_click_text,
+                                    timeout=30000,
+                                )
+                            except Exception:
+                                print(
+                                    "Page text did not change within "
+                                    "30 seconds after the click."
+                                )
 
-                        print(
-                            f"{browser_name} attempt {attempt} failed: "
-                            f"{error}"
-                        )
-
-                        if attempt < 3:
+                            # Give any later rendering time to finish.
                             page.wait_for_timeout(5000)
 
-            except Exception as error:
-                last_error = error
-                print(f"{browser_name} failed: {error}")
+                        except Exception as click_error:
+                            print(
+                                "Could not load another batch: "
+                                f"{click_error}"
+                            )
+                            break
 
-            finally:
-                if browser is not None:
-                    browser.close()
+                    # Combine all captured states. This works whether
+                    # the site appends results or replaces old results.
+                    combined_text = clean_text(
+                        " ".join(captured_batches)
+                    )
 
-    raise RuntimeError(
-        "Could not load the Tickets.com schedule after trying "
-        f"Chromium and Firefox. Last error: {last_error}"
-    )
+                    if len(combined_text) < 50:
+                        raise RuntimeError(
+                            "The schedule contained too little text."
+                        )
+
+                    print(
+                        f"Combined captured text: "
+                        f"{len(combined_text):,} characters."
+                    )
+                    print(
+                        "August present in combined text:",
+                        "AUG " in combined_text.upper(),
+                    )
+                    print(
+                        "Odyssey present in combined text:",
+                        "THE ODYSSEY"
+                        in combined_text.upper(),
+                    )
+
+                    return combined_text
+
+                except Exception as error:
+                    last_error = error
+
+                    print(
+                        f"Firefox attempt {attempt} failed: "
+                        f"{error}"
+                    )
+
+                    if attempt < 3:
+                        page.wait_for_timeout(5000)
+
+            raise RuntimeError(
+                "Firefox could not load the schedule after "
+                f"three attempts. Last error: {last_error}"
+            )
+
+        finally:
+            if browser is not None:
+                browser.close()
 
 def extract_target_showings(page_text):
     """
