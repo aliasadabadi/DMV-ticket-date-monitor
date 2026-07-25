@@ -354,13 +354,14 @@ def send_email_notification(subject, message):
 
     print("Email notification sent successfully.")
 
-
 def main():
     print(
         "Checking The Odyssey at Airbus "
         "and Lockheed IMAX..."
     )
+
     schedule_data = get_schedule_data()
+
     current_showings = extract_target_showings(
         schedule_data
     )
@@ -369,7 +370,7 @@ def main():
         f"Found {len(current_showings)} Odyssey "
         "showings across the target IMAX venues."
     )
-    
+
     for showing in sorted(
         current_showings.values(),
         key=lambda item: item["date_time"],
@@ -389,27 +390,27 @@ def main():
 
     previous_state = load_state()
 
-    # First run after installing this targeted version establishes
-    # a clean baseline and intentionally sends no notification.
+    # First run creates the baseline and sends no alert.
     if previous_state is None or "showings" not in previous_state:
         save_state(current_showings)
+
         print(
             "Targeted baseline created. "
             "No notification sent on this run."
         )
         return
 
-    previous_showings = previous_state.get("showings", {})
+    previous_showings = previous_state.get(
+        "showings",
+        {},
+    )
+
     alerts = []
 
     for key, current in current_showings.items():
         previous = previous_showings.get(key)
 
-            alerts = []
-
-    for key, current in current_showings.items():
-        previous = previous_showings.get(key)
-
+        # A newly added showing that is already available.
         if (
             previous is None
             and current["status"] == "available"
@@ -419,6 +420,8 @@ def main():
             )
             continue
 
+        # An existing showing changed from unavailable
+        # to available.
         if (
             previous is not None
             and previous.get("status") in {
@@ -431,81 +434,87 @@ def main():
                 ("became_available", current)
             )
 
+    # Save the newest complete state whether or not
+    # an alert was generated.
     save_state(current_showings)
 
-    if alerts:
-        available_showings = []
-
-        for alert_type, showing in alerts:
-            available_showings.append(
-                {
-                    "alert_type": alert_type,
-                    "showing": showing,
-                }
-            )
-        available_showings.sort(
-            key=lambda item: item["showing"]["date_time"]
-        )
-        lines = [
-            "The Odyssey tickets are available.",
-            "",
-            f"{len(available_showings)} showing(s) detected:",
-            "",
-        ]
-        for index, item in enumerate(
-            available_showings,
-            start=1,
-        ):
-            showing = item["showing"]
-            alert_type = item["alert_type"]
-            if alert_type == "new":
-                label = "New showing"
-            else:
-                label = "Tickets became available"
-            lines.extend(
-                [
-                    f"{index}. {label}",
-                    format_showing(showing),
-                    "",
-                ]
-            )
-        lines.extend(
-            [
-                "Open the ticket page:",
-                URL,
-            ]
-        )
-        message = "\n".join(lines)
-        subject = (
-            f"The Odyssey: "
-            f"{len(available_showings)} available showing(s)"
-        )
-        try:
-            send_notification(
-                subject,
-                message,
-            )
-        except Exception as error:
-            print(
-                f"ntfy notification failed: {error}"
-            )
-        try:
-            send_email_notification(
-                subject,
-                message,
-            )
-        except Exception as error:
-            print(
-                f"Email notification failed: {error}"
-            )
-        print(
-            f"Sent one combined notification for "
-            f"{len(available_showings)} showing(s)."
-        )
-    else:
+    if not alerts:
         print(
             "No new available Odyssey showings detected."
         )
+        return
+
+    # Sort all alerts chronologically and send them
+    # together in one email/notification.
+    alerts.sort(
+        key=lambda item: item[1]["date_time"]
+    )
+
+    message_lines = [
+        "The Odyssey tickets are available.",
+        "",
+        f"{len(alerts)} showing(s) detected:",
+        "",
+    ]
+
+    for index, (alert_type, showing) in enumerate(
+        alerts,
+        start=1,
+    ):
+        if alert_type == "new":
+            label = "New showing"
+        else:
+            label = "Tickets became available"
+
+        message_lines.extend(
+            [
+                f"{index}. {label}",
+                format_showing(showing),
+                "",
+            ]
+        )
+
+    message_lines.extend(
+        [
+            "Open the ticket page:",
+            URL,
+        ]
+    )
+
+    message = "\n".join(message_lines)
+
+    if len(alerts) == 1:
+        subject = "The Odyssey: tickets available"
+    else:
+        subject = (
+            f"The Odyssey: "
+            f"{len(alerts)} available showings"
+        )
+
+    try:
+        send_notification(
+            subject,
+            message,
+        )
+    except Exception as error:
+        print(
+            f"ntfy notification failed: {error}"
+        )
+
+    try:
+        send_email_notification(
+            subject,
+            message,
+        )
+    except Exception as error:
+        print(
+            f"Email notification failed: {error}"
+        )
+
+    print(
+        f"Sent one combined alert for "
+        f"{len(alerts)} showing(s)."
+    )
 
 
 if __name__ == "__main__":
