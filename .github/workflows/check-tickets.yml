@@ -27,7 +27,7 @@ jobs:
       - name: Install Python packages
         run: |
           pip install -r requirements.txt
-          playwright install --with-deps chromium
+          playwright install --with-deps chromium firefox
 
       - name: Check ticket schedule
         env:
