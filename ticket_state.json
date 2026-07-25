@@ -8,7 +8,7 @@
       "time": "5:30PM EDT",
       "title": "THE ODYSSEY",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "available"
+      "status": "sold_out"
     },
     "JUL 25|9:15PM EDT|THE ODYSSEY": {
       "date": "JUL 25",
@@ -17,14 +17,6 @@
       "title": "THE ODYSSEY",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
       "status": "sold_out"
-    },
-    "JUL 26|5:30PM EDT|THE ODYSSEY": {
-      "date": "JUL 26",
-      "weekday": "SUNDAY",
-      "time": "5:30PM EDT",
-      "title": "THE ODYSSEY",
-      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "available"
     },
     "JUL 26|9:15PM EDT|THE ODYSSEY": {
       "date": "JUL 26",
