@@ -13,9 +13,9 @@
       "time": "5:30PM EDT",
       "title": "THE ODYSSEY",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "available",
+      "status": "sold_out",
       "onsale": true,
-      "sold_out": false,
+      "sold_out": true,
       "event_id": "127457"
     },
     "9743021": {
@@ -39,9 +39,9 @@
       "time": "5:30PM EDT",
       "title": "THE ODYSSEY",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "available",
+      "status": "sold_out",
       "onsale": true,
-      "sold_out": false,
+      "sold_out": true,
       "event_id": "127459"
     },
     "9742996": {
@@ -455,9 +455,9 @@
       "time": "5:30PM EDT",
       "title": "THE ODYSSEY",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "available",
+      "status": "sold_out",
       "onsale": true,
-      "sold_out": false,
+      "sold_out": true,
       "event_id": "129102"
     },
     "9757338": {
@@ -494,9 +494,9 @@
       "time": "5:30PM EDT",
       "title": "THE ODYSSEY",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "available",
+      "status": "sold_out",
       "onsale": true,
-      "sold_out": false,
+      "sold_out": true,
       "event_id": "129329"
     },
     "9760378": {
