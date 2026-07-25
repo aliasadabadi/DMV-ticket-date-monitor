@@ -29,6 +29,35 @@ TARGET_VENUES = [
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
 
+def page_text_from_api(api_text):
+    """
+    Recursively collect all text values from the API JSON.
+
+    This is temporary. Once we see the JSON structure, we will
+    extract showings directly by field name instead.
+    """
+    data = json.loads(api_text)
+    values = []
+
+    def collect(value):
+        if isinstance(value, dict):
+            for item in value.values():
+                collect(item)
+
+        elif isinstance(value, list):
+            for item in value:
+                collect(item)
+
+        elif isinstance(value, str):
+            values.append(value)
+
+        elif value is not None:
+            values.append(str(value))
+
+    collect(data)
+
+    return " ".join(values)
+    
 def get_page_text():
     with sync_playwright() as playwright:
         browser = playwright.firefox.launch(headless=True)
@@ -45,224 +74,52 @@ def get_page_text():
             ),
         )
 
-        captured_responses = []
+        print("Opening schedule page and waiting for API response...")
 
-        def record_response(response):
-            request = response.request
-
-            if request.resource_type in {
-                "xhr",
-                "fetch",
-            }:
-                captured_responses.append(response)
-
-                print(
-                    "NETWORK RESPONSE:",
-                    response.status,
-                    request.method,
-                    response.url,
-                )
-
-        page.on("response", record_response)
-
-        print("Opening schedule page...")
-
-        page.goto(
-            URL,
-            wait_until="commit",
-            timeout=60000,
-        )
-
-        page.wait_for_function(
-            """
-            () => {
-                const text =
-                    document.body?.innerText || "";
-
-                return (
-                    text.includes("EVENTS") &&
-                    text.includes("RESULTS")
-                );
-            }
-            """,
-            timeout=60000,
-        )
-
-        page.wait_for_timeout(10000)
-
-        visible_text = clean_text(
-            page.locator("body").inner_text()
-        )
-
-        hidden_text = clean_text(
-            page.locator("body").text_content() or ""
-        )
-
-        full_html = page.content()
-
-        print(
-            "Visible text length:",
-            len(visible_text),
-        )
-        print(
-            "All body text length:",
-            len(hidden_text),
-        )
-        print(
-            "HTML length:",
-            len(full_html),
-        )
-
-        print(
-            "August in visible text:",
-            "AUG " in visible_text.upper(),
-        )
-        print(
-            "August in all body text:",
-            "AUG " in hidden_text.upper(),
-        )
-        print(
-            "August in HTML:",
-            "AUG " in full_html.upper(),
-        )
-
-        view_more_text = page.get_by_text(
-            re.compile(
-                r"VIEW\s+MORE\s+RESULTS",
-                re.IGNORECASE,
+        with page.expect_response(
+            lambda response: (
+                "/api/pvodc/v1/eventschedule/" in response.url
+                and response.status == 200
             ),
-            exact=False,
-        )
+            timeout=120000,
+        ) as response_info:
 
-        if view_more_text.count() == 0:
-            browser.close()
-
-            raise RuntimeError(
-                "Could not locate View More Results."
+            page.goto(
+                URL,
+                wait_until="commit",
+                timeout=60000,
             )
 
-        text_element = view_more_text.last
+        response = response_info.value
+        api_text = response.text()
 
-        interactive_element = text_element.locator(
-            "xpath=ancestor-or-self::*["
-            "self::button or "
-            "self::a or "
-            "@role='button'"
-            "][1]"
+        print("Schedule API URL:")
+        print(response.url)
+
+        print("Schedule API response length:")
+        print(len(api_text))
+
+        print("Contains August:")
+        print("AUG" in api_text.upper())
+
+        print("Contains Odyssey:")
+        print("ODYSSEY" in api_text.upper())
+
+        print("API RESPONSE PREVIEW:")
+        print(api_text[:10000])
+        
+        Path("schedule_api.json").write_text(
+            api_text,
+            encoding="utf-8",
         )
 
-        if interactive_element.count() > 0:
-            button = interactive_element.first
-        else:
-            button = text_element
-
-        try:
-            outer_html = button.evaluate(
-                "element => element.outerHTML"
-            )
-
-            print("VIEW MORE ELEMENT HTML:")
-            print(outer_html)
-
-        except Exception as error:
-            print(
-                "Could not print element HTML:",
-                error,
-            )
-
-        before_text = clean_text(
-            page.locator("body").inner_text()
+        combined_text = clean_text(
+            page_text_from_api(api_text)
         )
-
-        captured_responses.clear()
-
-        button.scroll_into_view_if_needed()
-        page.wait_for_timeout(1000)
-
-        print("Clicking View More Results once...")
-
-        button.click(
-            force=True,
-            timeout=20000,
-        )
-
-        page.wait_for_timeout(15000)
-
-        after_visible_text = clean_text(
-            page.locator("body").inner_text()
-        )
-
-        after_hidden_text = clean_text(
-            page.locator("body").text_content() or ""
-        )
-
-        after_html = page.content()
-
-        print(
-            "Visible text changed:",
-            after_visible_text != before_text,
-        )
-        print(
-            "August after click in visible text:",
-            "AUG " in after_visible_text.upper(),
-        )
-        print(
-            "August after click in all body text:",
-            "AUG " in after_hidden_text.upper(),
-        )
-        print(
-            "August after click in HTML:",
-            "AUG " in after_html.upper(),
-        )
-
-        print(
-            "XHR/fetch responses after click:",
-            len(captured_responses),
-        )
-
-        for response in captured_responses:
-            try:
-                body = response.text()
-
-                print(
-                    "RESPONSE BODY SUMMARY:",
-                    response.url,
-                    "characters=",
-                    len(body),
-                    "contains August=",
-                    "AUG " in body.upper(),
-                    "contains Odyssey=",
-                    "ODYSSEY" in body.upper(),
-                )
-
-                if (
-                    "AUG " in body.upper()
-                    or "ODYSSEY" in body.upper()
-                ):
-                    print(
-                        "RELEVANT RESPONSE URL:",
-                        response.url,
-                    )
-
-                    print(
-                        "RESPONSE PREVIEW:",
-                        body[:3000],
-                    )
-
-            except Exception as error:
-                print(
-                    "Could not read response body:",
-                    response.url,
-                    error,
-                )
 
         browser.close()
 
-        # Return the broadest page text for this diagnostic run.
-        return after_hidden_text
-
-
-
+        return combined_text
 def extract_target_showings(page_text):
     """
     Extract The Odyssey showings at all target IMAX venues.
