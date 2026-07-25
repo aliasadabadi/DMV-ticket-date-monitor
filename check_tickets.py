@@ -21,8 +21,10 @@ EMAIL_APP_PASSWORD = os.environ.get("EMAIL_APP_PASSWORD", "")
 EMAIL_TO = os.environ.get("EMAIL_TO", "")
 
 TARGET_MOVIE = "THE ODYSSEY"
-TARGET_VENUE = "AIRBUS IMAX THEATER, CHANTILLY, VA"
-
+TARGET_VENUES = [
+    "AIRBUS IMAX THEATER, CHANTILLY, VA",
+    "LOCKHEED MARTIN IMAX THEATER, WASHINGTON, DC",
+]
 
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
@@ -115,16 +117,20 @@ def get_page_text():
         f"Last error: {last_error}"
     )
 
-
 def extract_target_showings(page_text):
     """
-    Extract only The Odyssey showings at Airbus IMAX.
+    Extract The Odyssey showings at all target IMAX venues.
 
-    Each showing is stored using date, time, and title as its unique key.
+    Each showing is uniquely identified by:
+    date + time + title + venue.
     """
 
     month_pattern = (
         r"JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC"
+    )
+
+    venue_pattern = "|".join(
+        re.escape(venue) for venue in TARGET_VENUES
     )
 
     pattern = re.compile(
@@ -135,7 +141,7 @@ def extract_target_showings(page_text):
         rf"FRIDAY|SATURDAY|SUNDAY) "
         rf"\| (?P<time>\d{{1,2}}:\d{{2}}[AP]M "
         rf"(?:EDT|EST)) "
-        rf"AIRBUS IMAX THEATER, CHANTILLY, VA"
+        rf"(?P<venue>{venue_pattern})"
         rf"(?P<following>.*?)"
         rf"(?=(?:{month_pattern}) \d{{1,2}} |\Z)",
         re.IGNORECASE,
@@ -148,6 +154,7 @@ def extract_target_showings(page_text):
         title = match.group("title").upper()
         weekday = match.group("weekday").upper()
         time = match.group("time").upper()
+        venue = match.group("venue").upper()
         following_text = match.group("following").lower()
 
         if "currently sold out" in following_text:
@@ -157,19 +164,20 @@ def extract_target_showings(page_text):
         else:
             status = "available"
 
-        key = f"{date}|{time}|{title}"
+        # Venue is included because both theaters could have
+        # the same movie at the same date and time.
+        key = f"{date}|{time}|{title}|{venue}"
 
         showings[key] = {
             "date": date,
             "weekday": weekday,
             "time": time,
             "title": title,
-            "venue": TARGET_VENUE,
+            "venue": venue,
             "status": status,
         }
 
     return showings
-
 
 def load_state():
     if not STATE_FILE.exists():
@@ -187,7 +195,7 @@ def load_state():
 def save_state(showings):
     state = {
         "movie": TARGET_MOVIE,
-        "venue": TARGET_VENUE,
+        "venues": TARGET_VENUES,
         "showings": showings,
     }
 
@@ -203,12 +211,13 @@ def save_state(showings):
 
 def format_showing(showing):
     title = showing["title"].title()
+    venue = showing["venue"].title()
 
     return (
         f"{title}\n"
         f"{showing['weekday'].title()}, "
         f"{showing['date'].title()} at {showing['time']}\n"
-        f"Airbus IMAX Theater, Chantilly"
+        f"{venue}"
     )
 
 
@@ -257,14 +266,13 @@ def send_email_notification(subject, message):
     print("Email notification sent successfully.")
     
 def main():
-    print("Checking The Odyssey at Airbus IMAX...")
-
+    print("Checking The Odyssey at Airbus and Lockheed IMAX...")
     page_text = get_page_text()
     current_showings = extract_target_showings(page_text)
 
     print(
         f"Found {len(current_showings)} Odyssey "
-        "showings at Airbus IMAX."
+        "showings across the target IMAX venues."
     )
 
     for showing in current_showings.values():
@@ -275,7 +283,7 @@ def main():
 
     if not current_showings:
         raise RuntimeError(
-            "No Odyssey showings at Airbus IMAX were found. "
+            "No Odyssey showings were found at either target venue. "
             "The website format may have changed."
         )
 
