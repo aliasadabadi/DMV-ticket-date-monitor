@@ -15,6 +15,9 @@ URL = (
 
 STATE_FILE = Path("ticket_state.json")
 NTFY_TOPIC = os.environ.get("NTFY_TOPIC", "")
+EMAIL_USERNAME = os.environ.get("EMAIL_USERNAME", "")
+EMAIL_APP_PASSWORD = os.environ.get("EMAIL_APP_PASSWORD", "")
+EMAIL_TO = os.environ.get("EMAIL_TO", "")
 
 TARGET_MOVIE = "THE ODYSSEY"
 TARGET_VENUE = "AIRBUS IMAX THEATER, CHANTILLY, VA"
