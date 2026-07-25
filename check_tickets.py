@@ -7,6 +7,7 @@ import requests
 import smtplib
 from email.message import EmailMessage
 from datetime import datetime
+from playwright.sync_api import sync_playwright
 
 URL = (
     "https://mpv.tickets.com/schedule/"
@@ -33,75 +34,101 @@ def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
 def get_schedule_data():
     """
-    Download the complete structured schedule directly from
-    the Tickets.com API.
+    Open the Tickets.com page in Firefox and capture the complete
+    structured eventschedule API response.
     """
-
-    headers = {
-        "Accept": "application/json",
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 Chrome/126.0 Safari/537.36"
-        ),
-    }
 
     last_error = None
 
-    for attempt in range(1, 4):
-        try:
-            print(
-                f"Downloading schedule API, attempt "
-                f"{attempt} of 3..."
-            )
+    with sync_playwright() as playwright:
+        for attempt in range(1, 4):
+            browser = None
 
-            response = requests.get(
-                API_URL,
-                headers=headers,
-                timeout=90,
-            )
-
-            response.raise_for_status()
-
-            data = response.json()
-
-            events = (
-                data
-                .get("eventSchedule", {})
-                .get("events", [])
-            )
-
-            if not isinstance(events, list):
-                raise RuntimeError(
-                    "The API events field was not a list."
+            try:
+                print(
+                    f"Loading schedule through Firefox, "
+                    f"attempt {attempt} of 3..."
                 )
 
-            if not events:
-                raise RuntimeError(
-                    "The API returned no schedule events."
+                browser = playwright.firefox.launch(
+                    headless=True,
                 )
 
-            print(
-                f"Schedule API returned "
-                f"{len(events)} total events."
-            )
+                page = browser.new_page(
+                    viewport={
+                        "width": 1440,
+                        "height": 1600,
+                    },
+                    user_agent=(
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 "
+                        "Firefox/128.0"
+                    ),
+                )
 
-            return data
+                with page.expect_response(
+                    lambda response: (
+                        "/api/pvodc/v1/eventschedule/" in response.url
+                        and response.status == 200
+                    ),
+                    timeout=120000,
+                ) as response_info:
+                    page.goto(
+                        URL,
+                        wait_until="commit",
+                        timeout=60000,
+                    )
 
-        except Exception as error:
-            last_error = error
+                response = response_info.value
 
-            print(
-                f"Schedule API attempt {attempt} failed: "
-                f"{error}"
-            )
+                print("Schedule API response received:")
+                print(response.url)
 
-            if attempt < 3:
-                import time
-                time.sleep(5)
+                # Playwright parses the JSON response directly.
+                schedule_data = response.json()
+
+                events = (
+                    schedule_data
+                    .get("eventSchedule", {})
+                    .get("events", [])
+                )
+
+                if not isinstance(events, list):
+                    raise RuntimeError(
+                        "The schedule API events field is not a list."
+                    )
+
+                if not events:
+                    raise RuntimeError(
+                        "The schedule API returned no events."
+                    )
+
+                print(
+                    f"Schedule API returned "
+                    f"{len(events)} total events."
+                )
+
+                browser.close()
+                return schedule_data
+
+            except Exception as error:
+                last_error = error
+
+                print(
+                    f"Firefox API attempt {attempt} failed: "
+                    f"{error}"
+                )
+
+                if browser is not None:
+                    browser.close()
+
+                if attempt < 3:
+                    import time
+                    time.sleep(5)
 
     raise RuntimeError(
-        "Could not download the schedule API after "
-        f"three attempts. Last error: {last_error}"
+        "Could not capture the Tickets.com schedule API "
+        f"after three attempts. Last error: {last_error}"
     )
 
 def extract_target_showings(schedule_data):
