@@ -1,0 +1,16 @@
+name: Schedule trigger test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Confirm scheduled trigger
+        run: |
+          echo "Triggered by: ${{ github.event_name }}"
+          date -u
