@@ -13,7 +13,7 @@ permissions:
 jobs:
   check-tickets:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
       - name: Download repository
@@ -28,7 +28,7 @@ jobs:
       - name: Install Python packages
         run: |
           pip install -r requirements.txt
-          playwright install --with-deps chromium firefox
+          playwright install --with-deps firefox
 
       - name: Check ticket schedule
         env:
