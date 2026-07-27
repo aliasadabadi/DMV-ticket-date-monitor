@@ -135,6 +135,19 @@
       "sold_out": true,
       "event_id": "129358"
     },
+    "9765425": {
+      "performance_id": "9765425",
+      "date": "AUG 01",
+      "date_time": "2026-08-01T13:45-04:00",
+      "weekday": "SATURDAY",
+      "time": "1:45PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
+      "status": "not_on_sale",
+      "onsale": false,
+      "sold_out": false,
+      "event_id": "129365"
+    },
     "9743025": {
       "performance_id": "9743025",
       "date": "AUG 01",
@@ -186,6 +199,19 @@
       "onsale": true,
       "sold_out": true,
       "event_id": "129357"
+    },
+    "9765429": {
+      "performance_id": "9765429",
+      "date": "AUG 02",
+      "date_time": "2026-08-02T13:45-04:00",
+      "weekday": "SUNDAY",
+      "time": "1:45PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
+      "status": "not_on_sale",
+      "onsale": false,
+      "sold_out": false,
+      "event_id": "129366"
     },
     "9743040": {
       "performance_id": "9743040",
@@ -369,6 +395,19 @@
       "sold_out": true,
       "event_id": "129335"
     },
+    "9765432": {
+      "performance_id": "9765432",
+      "date": "AUG 08",
+      "date_time": "2026-08-08T13:45-04:00",
+      "weekday": "SATURDAY",
+      "time": "1:45PM EDT",
+      "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
+      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
+      "status": "not_on_sale",
+      "onsale": false,
+      "sold_out": false,
+      "event_id": "129368"
+    },
     "9757358": {
       "performance_id": "9757358",
       "date": "AUG 08",
@@ -407,6 +446,19 @@
       "onsale": true,
       "sold_out": true,
       "event_id": "129334"
+    },
+    "9765433": {
+      "performance_id": "9765433",
+      "date": "AUG 09",
+      "date_time": "2026-08-09T13:45-04:00",
+      "weekday": "SUNDAY",
+      "time": "1:45PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
+      "status": "not_on_sale",
+      "onsale": false,
+      "sold_out": false,
+      "event_id": "129367"
     },
     "9759909": {
       "performance_id": "9759909",
