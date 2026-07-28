@@ -416,116 +416,118 @@ def main():
         {},
     )
 
-    alerts = []
+    new_showing_alerts = []
+    renewed_availability_alerts = []
 
     for key, current in current_showings.items():
         previous = previous_showings.get(key)
 
-        # A newly added showing that is already available.
+        # A brand-new performance was added and tickets are available.
         if (
             previous is None
             and current["status"] == "available"
         ):
-            alerts.append(
-                ("new", current)
-            )
+            new_showing_alerts.append(current)
             continue
 
-        # An existing showing changed from unavailable
-        # to available.
-        #if (
-        #    previous is not None
-        #    and previous.get("status") in {
-        #        "sold_out",
-        #        "not_on_sale",
-        #    }
-        #    and current["status"] == "available"
-        #):
-        #    alerts.append(
-        #        ("became_available", current)
-        #    )
+        # A performance already existed, but changed from
+        # unavailable/sold out to available.
+        if (
+            previous is not None
+            and previous.get("status") in {
+                "sold_out",
+                "not_on_sale",
+            }
+            and current["status"] == "available"
+        ):
+            renewed_availability_alerts.append(current)
 
-    # Save the newest complete state whether or not
-    # an alert was generated.
+    # Always save the latest state.
     save_state(current_showings)
 
-    if not alerts:
-        print(
-            "No new available Odyssey showings detected."
+    def build_email_message(intro, showings):
+        showings.sort(
+            key=lambda showing: showing["date_time"]
         )
-        return
 
-    # Sort all alerts chronologically and send them
-    # together in one email/notification.
-    alerts.sort(
-        key=lambda item: item[1]["date_time"]
-    )
+        lines = [
+            intro,
+            "",
+            f"{len(showings)} showing(s):",
+            "",
+        ]
 
-    message_lines = [
-        "The Odyssey tickets are available.",
-        "",
-        f"{len(alerts)} showing(s) detected:",
-        "",
-    ]
+        for index, showing in enumerate(showings, start=1):
+            lines.extend(
+                [
+                    f"{index}. {format_showing(showing)}",
+                    "",
+                ]
+            )
 
-    for index, (alert_type, showing) in enumerate(
-        alerts,
-        start=1,
-    ):
-        if alert_type == "new":
-            label = "New showing"
-        else:
-            label = "Tickets became available"
-
-        message_lines.extend(
+        lines.extend(
             [
-                f"{index}. {label}",
-                format_showing(showing),
-                "",
+                "Open the ticket page:",
+                URL,
             ]
         )
 
-    message_lines.extend(
-        [
-            "Open the ticket page:",
-            URL,
-        ]
-    )
+        return "\n".join(lines)
 
-    message = "\n".join(message_lines)
-
-    if len(alerts) == 1:
-        subject = "The Odyssey: tickets available"
-    else:
+    if new_showing_alerts:
         subject = (
-            f"The Odyssey: "
-            f"{len(alerts)} available showings"
+            "The Odyssey: new showings added"
+            if len(new_showing_alerts) > 1
+            else "The Odyssey: new showing added"
         )
 
-    try:
-        send_notification(
-            subject,
-            message,
+        message = build_email_message(
+            "New Odyssey showings have been added "
+            "and tickets are available.",
+            new_showing_alerts,
         )
-    except Exception as error:
+
+        try:
+            send_email_notification(subject, message)
+        except Exception as error:
+            print(f"New-showing email failed: {error}")
+
         print(
-            f"ntfy notification failed: {error}"
+            f"Sent new-showing email for "
+            f"{len(new_showing_alerts)} showing(s)."
         )
 
-    try:
-        send_email_notification(
-            subject,
-            message,
+    if renewed_availability_alerts:
+        subject = (
+            "The Odyssey: tickets available again"
         )
-    except Exception as error:
+
+        message = build_email_message(
+            "Tickets have become available again for "
+            "existing Odyssey showings that were previously "
+            "sold out or unavailable.",
+            renewed_availability_alerts,
+        )
+
+        try:
+            send_email_notification(subject, message)
+        except Exception as error:
+            print(
+                f"Renewed-availability email failed: {error}"
+            )
+
         print(
-            f"Email notification failed: {error}"
+            f"Sent renewed-availability email for "
+            f"{len(renewed_availability_alerts)} showing(s)."
         )
 
-    print(
-        f"Sent one combined alert for "
-        f"{len(alerts)} showing(s)."
-    )
+    if (
+        not new_showing_alerts
+        and not renewed_availability_alerts
+    ):
+        print(
+            "No new showings or renewed availability detected."
+        )
 
 
 if __name__ == "__main__":
