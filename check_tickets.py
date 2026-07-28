@@ -433,17 +433,17 @@ def main():
 
         # An existing showing changed from unavailable
         # to available.
-        if (
-            previous is not None
-            and previous.get("status") in {
-                "sold_out",
-                "not_on_sale",
-            }
-            and current["status"] == "available"
-        ):
-            alerts.append(
-                ("became_available", current)
-            )
+        #if (
+        #    previous is not None
+        #    and previous.get("status") in {
+        #        "sold_out",
+        #        "not_on_sale",
+        #    }
+        #    and current["status"] == "available"
+        #):
+        #    alerts.append(
+        #        ("became_available", current)
+        #    )
 
     # Save the newest complete state whether or not
     # an alert was generated.
