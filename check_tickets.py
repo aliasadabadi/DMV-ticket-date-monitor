@@ -30,6 +30,15 @@ TARGET_VENUES = [
     "LOCKHEED IMAX THEATER, WASHINGTON, DC",
 ]
 
+TELEGRAM_BOT_TOKEN = os.environ.get(
+    "TELEGRAM_BOT_TOKEN",
+    "",
+)
+
+TELEGRAM_CHAT_IDS = os.environ.get(
+    "TELEGRAM_CHAT_IDS",
+    "",
+)
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
 def get_schedule_data():
