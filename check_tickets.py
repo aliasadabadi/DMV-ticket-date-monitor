@@ -329,7 +329,7 @@ def send_notification(title, message):
     )
 
     response.raise_for_status()
-
+    
 def send_email_notification(subject, message):
     if not all([
         EMAIL_USERNAME,
@@ -340,10 +340,14 @@ def send_email_notification(subject, message):
         return
 
     recipients = [
-        email.strip()
-        for email in EMAIL_TO.split(",")
-        if email.strip()
+        address.strip()
+        for address in EMAIL_TO.split(",")
+        if address.strip()
     ]
+
+    if not recipients:
+        print("No valid email recipients were configured.")
+        return
 
     email = EmailMessage()
     email["Subject"] = subject
@@ -359,12 +363,16 @@ def send_email_notification(subject, message):
             EMAIL_USERNAME,
             EMAIL_APP_PASSWORD,
         )
-        smtp.send_message(email)
+        smtp.send_message(
+            email,
+            to_addrs=recipients,
+        )
 
     print(
         f"Email notification sent to "
         f"{len(recipients)} recipient(s)."
     )
+    
 def main():
     print(
         "Checking The Odyssey at Airbus "
