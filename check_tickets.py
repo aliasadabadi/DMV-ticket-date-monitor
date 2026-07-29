@@ -543,6 +543,13 @@ def main():
         except Exception as error:
             print(f"New-showing email failed: {error}")
 
+        try:
+            send_telegram_notification(
+                f"{subject}\n\n{message}"
+            )
+        except Exception as error:
+            print(f"Telegram notification failed: {error}")
+
         print(
             f"Sent new-showing email for "
             f"{len(new_showing_alerts)} showing(s)."
