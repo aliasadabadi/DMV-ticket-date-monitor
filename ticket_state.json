@@ -395,6 +395,19 @@
       "sold_out": true,
       "event_id": "129335"
     },
+    "9765432": {
+      "performance_id": "9765432",
+      "date": "AUG 08",
+      "date_time": "2026-08-08T13:45-04:00",
+      "weekday": "SATURDAY",
+      "time": "1:45PM EDT",
+      "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
+      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
+      "status": "available",
+      "onsale": true,
+      "sold_out": false,
+      "event_id": "129368"
+    },
     "9757358": {
       "performance_id": "9757358",
       "date": "AUG 08",
