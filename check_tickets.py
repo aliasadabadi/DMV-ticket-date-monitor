@@ -39,6 +39,40 @@ TELEGRAM_CHAT_IDS = os.environ.get(
     "TELEGRAM_CHAT_IDS",
     "",
 )
+def send_telegram_notification(message):
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_IDS:
+        print("Telegram secrets are not fully configured.")
+        return
+
+    chat_ids = [
+        chat_id.strip()
+        for chat_id in TELEGRAM_CHAT_IDS.split(",")
+        if chat_id.strip()
+    ]
+
+    api_url = (
+        f"https://api.telegram.org/"
+        f"bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    )
+
+    for chat_id in chat_ids:
+        response = requests.post(
+            api_url,
+            json={
+                "chat_id": chat_id,
+                "text": message,
+                "disable_web_page_preview": False,
+            },
+            timeout=30,
+        )
+
+        response.raise_for_status()
+
+    print(
+        f"Telegram alert sent to "
+        f"{len(chat_ids)} chat(s)."
+    )
+    
 def clean_text(text):
     return re.sub(r"\s+", " ", text).strip()
 def get_schedule_data():
