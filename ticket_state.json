@@ -26,9 +26,9 @@
       "time": "6:30PM EDT",
       "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
       "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
-      "status": "sold_out",
+      "status": "available",
       "onsale": true,
-      "sold_out": true,
+      "sold_out": false,
       "event_id": "127445"
     },
     "9757342": {
