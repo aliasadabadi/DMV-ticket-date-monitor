@@ -455,9 +455,9 @@
       "time": "9:15PM EDT",
       "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "available",
+      "status": "sold_out",
       "onsale": true,
-      "sold_out": false,
+      "sold_out": true,
       "event_id": "129341"
     }
   }
