@@ -39,9 +39,9 @@
       "time": "9:15PM EDT",
       "title": "THE ODYSSEY",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "sold_out",
+      "status": "available",
       "onsale": true,
-      "sold_out": true,
+      "sold_out": false,
       "event_id": "129096"
     },
     "9743024": {
@@ -78,9 +78,9 @@
       "time": "9:15PM EDT",
       "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "sold_out",
+      "status": "available",
       "onsale": true,
-      "sold_out": true,
+      "sold_out": false,
       "event_id": "129099"
     },
     "9763171": {
