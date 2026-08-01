@@ -5,19 +5,6 @@
     "LOCKHEED IMAX THEATER, WASHINGTON, DC"
   ],
   "showings": {
-    "9763171": {
-      "performance_id": "9763171",
-      "date": "JUL 31",
-      "date_time": "2026-07-31T21:45-04:00",
-      "weekday": "FRIDAY",
-      "time": "9:45PM EDT",
-      "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
-      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
-      "status": "sold_out",
-      "onsale": true,
-      "sold_out": true,
-      "event_id": "129358"
-    },
     "9765425": {
       "performance_id": "9765425",
       "date": "AUG 01",
