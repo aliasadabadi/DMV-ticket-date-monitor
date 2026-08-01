@@ -5,19 +5,6 @@
     "LOCKHEED IMAX THEATER, WASHINGTON, DC"
   ],
   "showings": {
-    "9743025": {
-      "performance_id": "9743025",
-      "date": "AUG 01",
-      "date_time": "2026-08-01T17:30-04:00",
-      "weekday": "SATURDAY",
-      "time": "5:30PM EDT",
-      "title": "THE ODYSSEY",
-      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "sold_out",
-      "onsale": true,
-      "sold_out": true,
-      "event_id": "127462"
-    },
     "9742982": {
       "performance_id": "9742982",
       "date": "AUG 01",
