@@ -3,9 +3,9 @@ name: Check DMV ticket dates
 on:
   workflow_dispatch:
 
-  #schedule:
-  #  - cron: "7 * * * *"
-  #    timezone: "America/New_York"
+concurrency:
+  group: odyssey-ticket-monitor
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -13,23 +13,26 @@ permissions:
 jobs:
   check-tickets:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
+
+    container:
+      image: mcr.microsoft.com/playwright/python:v1.54.0-noble
 
     steps:
       - name: Download repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Cache pip packages
+        uses: actions/cache@v4
         with:
-          python-version: "3.12"
-          cache: pip
+          path: /root/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
 
       - name: Install Python packages
-        run: |
-          pip install -r requirements.txt
-          playwright install --with-deps firefox
-          
+        run: pip install --disable-pip-version-check -r requirements.txt
+
       - name: Check ticket schedule
         env:
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
@@ -42,17 +45,26 @@ jobs:
 
       - name: Save latest schedule
         run: |
-          if [ -f ticket_state.json ]; then
-            git config user.name "DMV Ticket Monitor"
-            git config user.email "actions@github.com"
-            git add ticket_state.json
-
-            if git diff --cached --quiet; then
-              echo "No schedule-state changes to save."
-            else
-              git commit -m "Update ticket schedule state"
-              git push
-            fi
-          else
+          if [ ! -f ticket_state.json ]; then
             echo "No ticket_state.json file was created."
+            exit 0
           fi
+
+          git config user.name "DMV Ticket Monitor"
+          git config user.email "actions@github.com"
+
+          cp ticket_state.json /tmp/ticket_state.json
+
+          git fetch origin main
+          git reset --hard origin/main
+
+          cp /tmp/ticket_state.json ticket_state.json
+          git add ticket_state.json
+
+          if git diff --cached --quiet; then
+            echo "No schedule-state changes to save."
+            exit 0
+          fi
+
+          git commit -m "Update ticket schedule state"
+          git push origin main
