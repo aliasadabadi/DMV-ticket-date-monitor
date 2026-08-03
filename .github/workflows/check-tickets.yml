@@ -18,6 +18,9 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright/python:v1.54.0-noble
 
+    env:
+      HOME: /root
+      
     steps:
       - name: Download repository
         uses: actions/checkout@v6
