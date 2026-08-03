@@ -5,19 +5,6 @@
     "LOCKHEED IMAX THEATER, WASHINGTON, DC"
   ],
   "showings": {
-    "9764077": {
-      "performance_id": "9764077",
-      "date": "AUG 03",
-      "date_time": "2026-08-03T18:30-04:00",
-      "weekday": "MONDAY",
-      "time": "6:30PM EDT",
-      "title": "THE ODYSSEY",
-      "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
-      "status": "sold_out",
-      "onsale": true,
-      "sold_out": true,
-      "event_id": "129360"
-    },
     "9764081": {
       "performance_id": "9764081",
       "date": "AUG 04",
