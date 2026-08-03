@@ -15,30 +15,36 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
-    container:
-      image: mcr.microsoft.com/playwright/python:v1.54.0-noble
-
-    env:
-      HOME: /root
-      
     steps:
       - name: Download repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: Cache pip packages
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Cache Firefox
+        id: playwright-cache
         uses: actions/cache@v4
         with:
-          path: /root/.cache/pip
-          key: pip-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            pip-${{ runner.os }}-
+          path: ~/.cache/ms-playwright
+          key: playwright-firefox-${{ runner.os }}-1.54.0
 
       - name: Install Python packages
         run: pip install --disable-pip-version-check -r requirements.txt
 
+      - name: Install Firefox
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: playwright install --with-deps firefox
+
+      - name: Install Firefox system dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: playwright install-deps firefox
+
       - name: Check ticket schedule
         env:
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
           EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
@@ -65,7 +71,7 @@ jobs:
           git add ticket_state.json
 
           if git diff --cached --quiet; then
-            echo "No schedule-state changes to save."
+            echo "No schedule changes to save."
             exit 0
           fi
 
