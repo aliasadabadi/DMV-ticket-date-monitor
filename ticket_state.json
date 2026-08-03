@@ -13,9 +13,9 @@
       "time": "6:30PM EDT",
       "title": "THE ODYSSEY",
       "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
-      "status": "sold_out",
+      "status": "available",
       "onsale": true,
-      "sold_out": true,
+      "sold_out": false,
       "event_id": "129360"
     },
     "9764081": {
