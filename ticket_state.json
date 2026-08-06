@@ -278,6 +278,19 @@
       "sold_out": false,
       "event_id": "129784"
     },
+    "9771807": {
+      "performance_id": "9771807",
+      "date": "AUG 15",
+      "date_time": "2026-08-15T17:30-04:00",
+      "weekday": "SATURDAY",
+      "time": "5:30PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
+      "status": "not_on_sale",
+      "onsale": false,
+      "sold_out": false,
+      "event_id": "129791"
+    },
     "9771923": {
       "performance_id": "9771923",
       "date": "AUG 15",
@@ -369,6 +382,19 @@
       "sold_out": false,
       "event_id": "129795"
     },
+    "9771798": {
+      "performance_id": "9771798",
+      "date": "AUG 19",
+      "date_time": "2026-08-19T19:45-04:00",
+      "weekday": "WEDNESDAY",
+      "time": "7:45PM EDT",
+      "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
+      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
+      "status": "not_on_sale",
+      "onsale": false,
+      "sold_out": false,
+      "event_id": "129786"
+    },
     "9771818": {
       "performance_id": "9771818",
       "date": "AUG 20",
@@ -381,6 +407,19 @@
       "onsale": false,
       "sold_out": false,
       "event_id": "129796"
+    },
+    "9771819": {
+      "performance_id": "9771819",
+      "date": "AUG 20",
+      "date_time": "2026-08-20T19:45-04:00",
+      "weekday": "THURSDAY",
+      "time": "7:45PM EDT",
+      "title": "THE ODYSSEY",
+      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
+      "status": "not_on_sale",
+      "onsale": false,
+      "sold_out": false,
+      "event_id": "129797"
     },
     "9771892": {
       "performance_id": "9771892",
