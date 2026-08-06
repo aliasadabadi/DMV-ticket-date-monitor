@@ -186,19 +186,6 @@
       "onsale": true,
       "sold_out": true,
       "event_id": "129341"
-    },
-    "9771777": {
-      "performance_id": "9771777",
-      "date": "AUG 12",
-      "date_time": "2026-08-12T16:00-04:00",
-      "weekday": "WEDNESDAY",
-      "time": "4:00PM EDT",
-      "title": "THE ODYSSEY",
-      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "sold_out",
-      "onsale": false,
-      "sold_out": true,
-      "event_id": "129780"
     }
   }
 }
