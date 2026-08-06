@@ -5,7 +5,7 @@ on:
 
 concurrency:
   group: odyssey-ticket-monitor
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 permissions:
   contents: write
