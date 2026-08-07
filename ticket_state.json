@@ -169,9 +169,9 @@
       "time": "6:30PM EDT",
       "title": "THE ODYSSEY",
       "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
-      "status": "available",
+      "status": "sold_out",
       "onsale": true,
-      "sold_out": false,
+      "sold_out": true,
       "event_id": "129805"
     },
     "9771789": {
@@ -234,9 +234,9 @@
       "time": "6:30PM EDT",
       "title": "THE ODYSSEY",
       "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
-      "status": "available",
+      "status": "sold_out",
       "onsale": true,
-      "sold_out": false,
+      "sold_out": true,
       "event_id": "129806"
     },
     "9771795": {
@@ -338,9 +338,9 @@
       "time": "6:30PM EDT",
       "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
       "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
-      "status": "available",
+      "status": "sold_out",
       "onsale": true,
-      "sold_out": false,
+      "sold_out": true,
       "event_id": "129808"
     },
     "9771816": {
