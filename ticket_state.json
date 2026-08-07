@@ -299,8 +299,8 @@
       "time": "9:15PM EDT",
       "title": "THE ODYSSEY",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "not_on_sale",
-      "onsale": false,
+      "status": "available",
+      "onsale": true,
       "sold_out": false,
       "event_id": "129792"
     },
