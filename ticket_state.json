@@ -78,9 +78,9 @@
       "time": "6:30PM EDT",
       "title": "THE ODYSSEY",
       "venue": "LOCKHEED IMAX THEATER, WASHINGTON, DC",
-      "status": "available",
+      "status": "sold_out",
       "onsale": true,
-      "sold_out": false,
+      "sold_out": true,
       "event_id": "129094"
     },
     "9760426": {
@@ -104,9 +104,9 @@
       "time": "1:45PM EDT",
       "title": "THE ODYSSEY",
       "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
-      "status": "available",
+      "status": "sold_out",
       "onsale": true,
-      "sold_out": false,
+      "sold_out": true,
       "event_id": "129367"
     },
     "9759909": {
