@@ -5,6 +5,19 @@
     "LOCKHEED IMAX THEATER, WASHINGTON, DC"
   ],
   "showings": {
+    "9771796": {
+      "performance_id": "9771796",
+      "date": "AUG 15",
+      "date_time": "2026-08-15T13:45-04:00",
+      "weekday": "SATURDAY",
+      "time": "1:45PM EDT",
+      "title": "THE ODYSSEY - OPEN CAPTION (ON-SCREEN ENGLISH SUBTITLES)",
+      "venue": "AIRBUS IMAX THEATER, CHANTILLY, VA",
+      "status": "available",
+      "onsale": true,
+      "sold_out": false,
+      "event_id": "129784"
+    },
     "9771807": {
       "performance_id": "9771807",
       "date": "AUG 15",
